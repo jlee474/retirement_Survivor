@@ -156,10 +156,12 @@ class Market {
 }
 
 class Portfolio {
-    constructor(pValue, infl, startDate) {
+    constructor(pValue, infl, startDate, wdRate, survivalD) {
         this.pValue = pValue;
         this.infl = infl;
-        this.startDate = startDate
+        this.startDate = startDate;
+        this.wdRate = wdRate;
+        this.survivalD = survivalD;
     }
 
 }
@@ -169,7 +171,10 @@ btnSubmit.addEventListener('click', () => {
     pValue = document.getElementById('pValue').value;
     infl = document.getElementById('infl').value;
     startDate = document.getElementById('startDate').value;
+    withdrawalRate = document.getElementById('wd_Rate').value;
+    survivalDuration = document.getElementById('survival').value;
     sP500 = new Market(HISTORICAL, rReturn);
-    myPortfolio = new Portfolio(pValue, infl, startDate);
+    myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
+
 })
 

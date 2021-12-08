@@ -5,32 +5,39 @@
 
 <header>
     <title>Retirement Survivor</title>
+    <meta name="viewport" content="width-device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
 </header>
 <body>
     <head>
         <h1>Will my portfolio survive?</h1>
         <h2>Have you ever wondered whether you could retire based on historical market data?</h2>
         <h3>This simulation will help you determine, based on S&P 500 annual returns.</h3>
+        <h3>Assumptions: Annual withdrawal will be made at the beginning of the period</h3>
     </head>
 
     <main>
-        <input type="number" id="pValue" title="Current Starting Value of Your Portfolio" value="1000000">
-        <label for="pValue">Portfolio Value (current value of your portfolio)</label>
-
-        <input type="year" id="startDate" title="Initial Start Date of Portfolio Value" value="2022">
+        <div>
+            <label for="pValue">Portfolio Value (current value of your portfolio)</label>
+            <span style="position: absolute; margin-left: 3px; margin-top: 2px; ">$</span>
+            <input type="text" id="pValue" class="currency" title="Current Starting Value of Your Portfolio" value="1000000">
+        </div>
+            
         <label for="startDate">As of this year</label>
+        <input type="text" id="startDate" title="Initial Start Date of Portfolio Value" placeholder="yyyy" value="2022">
 
-        <input type="number" id="wd_Rate" title="Initial Year withdrawal rate % or $$" value=".04">
-        <label for="wd_Rate">Annual Withdrawal Rate</label>
+        <label for="wd_Rate">Initial Withdrawal Rate</label>
+        <input type="text" id="wd_Rate" title="Initial Year withdrawal rate % or $$" placeholder="$ amount or %"value=".04">
 
-        <input type="number" id="infl" title="This will be the annual % increase in your portfolio withdrawal. According to WorldData, the US average inflation rate was 3.5% from 1979 to 2020" value=".035">
         <label for="infl">Inflation Rate</label>
+        <input type="text" id="infl" title="This will be the annual % increase in your portfolio withdrawal. According to WorldData, the US average inflation rate was 3.5% from 1979 to 2020" placeholder="Enter as percent" value=".035">
     
-        <input type="number" id="survival" title="How long you need this portfolio to last in years" value="60">
         <label for="survival">Survival (in Years)</label>
+        <input type="text" id="survival" title="How long you need this portfolio to last in years" placeholder="# of Years" value="60">
 
-        <input type="number" id="rReturn" title="This is the assumed average rate of market return." value=".08">
         <label for="rReturn">Avg Annual Return</label>
+        <input type="text" id="rReturn" title="This is the assumed average rate of market return." placeholder="Enter as percent" value=".08">
         
         <input type="submit" id="submit" title="" value="Calculate">
         
@@ -47,9 +54,11 @@
     </main>
 
 
-
     <footer>
-
+        <div id="foot">
+            <h4>Comments Questions Feedback?</h4>
+        </div>
     </footer>
+    <script src="./input.js"></script>
     <script src="./app.js"></script>
 </body>

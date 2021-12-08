@@ -1,0 +1,25 @@
+html {
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 8px;
+    min-height: 95vh;
+    /* border: 2px solid green; */
+}
+
+footer {
+    /* border: 2px solid red; */
+    margin-top: auto;
+}
+
+input {
+    text-align: right;
+    max-width: 150px;
+}
+
