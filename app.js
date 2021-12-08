@@ -1,27 +1,8 @@
+// TODO : Test the random year function iterating it many times to make sure it is accurate
 
-class Market {
-    constructor(historical) {
-        this.returns = {...historical}
-    }
-
-
-    /**
-     * returns the length of the object of annual returns
-     */
-    get length() {
-        return Object.keys(this.returns).length
-    }
-
-    
-}
-
-class Portfolio {
-}
-
-
-
-
-
+const btnSubmit = document.getElementById('submit');
+const INIT_YEAR = 1926;
+const LATEST_YEAR = 2021;
 const HISTORICAL = {
     2021:	0.2646,
     2020:	0.184,
@@ -118,6 +99,77 @@ const HISTORICAL = {
     1929:	-0.0842,
     1928:	0.4361,
     1927:	0.3749,
-    1926:	0.1162}
-    
-const sP500 = new Market(HISTORICAL)
+    1926:	0.1162};
+let sP500 = {};
+let myPortfolio = {};
+
+class Market {
+    constructor(historical, rOr) {
+        this.historical = {...historical}
+        this.rOr = rOr //rOr = rate of return, supplied by user
+    }
+
+    /**
+     * returns the length of the object of annual returns
+     */
+    get length() {
+        return Object.keys(this.historical).length
+    }
+    get average() {
+        let sum = 0;
+        let year = "";
+        for (year in this.historical) {
+            sum += this.historical[year];
+        };
+        //let avg_disp = `${parseFloat(avg * 100).toFixed(2)}%` // display avg in % pretty print
+        return sum / this.length // decimal real average
+    }
+    get average_disp() {
+        return `${parseFloat(this.average * 100).toFixed(2)}%` // returns the average in "pretty print"
+    }
+
+    get stdDeviation() {
+        let difference = 0;
+        let year = "";
+        let average = this.average;
+        for (year in this.historical) {
+            difference += Math.abs( (this.historical[year] - average) );
+        }
+        return (difference / this.length);
+    }
+
+
+    /**
+     * 
+     * @param {number} Start Year
+     * @param {number} End Year 
+     * @returns {number} Returns a number 
+     */
+    random(startYr, endYr) {
+        if (startYr === undefined) {startYr = INIT_YEAR;}
+        if (endYr === undefined) {endYr = LATEST_YEAR;}
+        let range = endYr - startYr + 1;
+        let returnYear = Math.floor( Math.random() * range) + startYr;
+    return this.historical[returnYear];
+    }
+
+}
+
+class Portfolio {
+    constructor(pValue, infl, startDate) {
+        this.pValue = pValue;
+        this.infl = infl;
+        this.startDate = startDate
+    }
+
+}
+
+btnSubmit.addEventListener('click', () => {
+    rReturn = document.getElementById('rReturn').value;
+    pValue = document.getElementById('pValue').value;
+    infl = document.getElementById('infl').value;
+    startDate = document.getElementById('startDate').value;
+    sP500 = new Market(HISTORICAL, rReturn);
+    myPortfolio = new Portfolio(pValue, infl, startDate);
+})
+
