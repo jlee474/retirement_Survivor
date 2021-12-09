@@ -19,6 +19,9 @@ for (field of inputField) { //iterates through all the input fields to add event
 }
 
 
+/**
+ * This handler determines whether a user has input a decimal or integer, and formats the user input accordingly after the selection has changed
+ */
 wd_Rate.addEventListener('focusout', (evt) => {
     let target = evt.target
     let decimal = "neither";
@@ -31,15 +34,13 @@ wd_Rate.addEventListener('focusout', (evt) => {
         target.value = Number(target.value).toLocaleString();
         target.value = `$ ${target.value}`
     }
-    // } else if (target.value.includes("$") || target.value > 1) {
-    // convert2Num(decimal ? target.value : target.value, decimal, (number) => {
 })
 
 /**
  * 
  * @param {element} target
  * @param {Function} callback 
- * @returns function accepts an html element, formats the value accordingly, and executes callback function if any
+ * @returns function accepts an html element, formats the user-input value accordingly, and executes callback function if any
  */
 function convertStr (target, callback) {
     if (target.className === "currency" || target.id === "startDate" || target.id === "survival") { //format for currency $ and year
@@ -48,7 +49,6 @@ function convertStr (target, callback) {
             target.value = Number(target.value).toLocaleString(); //adds a thousandth separator
         } else if (target.id === "startDate") {
             if (target.value.toString().length > 4) {
-                console.log("triggered");
                 let cursorIndex = target.selectionStart;
                 if (cursorIndex > 5) cursorIndex = 5;  // this is just incase the user types it in too fast and the number of digits is greater than 5
                 target.value = target.value.slice(0, cursorIndex - 1) + target.value.slice(cursorIndex, 5) // deletes last typed character by referencing where the cursor is, and slicing the bit before, and the bit after, and concatenating the two slices together
@@ -67,7 +67,6 @@ function convertStr (target, callback) {
     
     target.value = target.value.replace( /^0/g,""); // in all cases remove any preceding 0's, e.g. 001234 => 1234 || 00.1234 => .1234
     
-    
     if (callback === undefined) {
         return;
     } else callback();
@@ -84,8 +83,6 @@ function convertStr (target, callback) {
 function convert2Num(str, decimal, callback) {
     decimal === undefined ? false : true; // if decimal is not passed in as argument
     let number = 0;
-    debugger;
-
     if (decimal) {
         number = parseFloat(  str.replace(/[^0-9.]/g, ""))/100; // removes all commas, $ and returns decimal
     }

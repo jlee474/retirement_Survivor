@@ -155,6 +155,7 @@ class Market {
 
 }
 
+
 class Portfolio {
     constructor(pValue, infl, startDate, wdRate, survivalD) {
         this.pValue = pValue;
@@ -164,17 +165,87 @@ class Portfolio {
         this.survivalD = survivalD;
     }
 
+    get currentYr() {
+        return this.startDate;
+    }
 }
 
-btnSubmit.addEventListener('click', () => {
-    rReturn = document.getElementById('rReturn').value;
-    pValue = document.getElementById('pValue').value;
-    infl = document.getElementById('infl').value;
-    startDate = document.getElementById('startDate').value;
-    withdrawalRate = document.getElementById('wd_Rate').value;
-    survivalDuration = document.getElementById('survival').value;
+
+class Results {
+    constructor(choose) {
+        this.choose = choose;
+        this.resultMessage = "";
+        this.dHeader();
+        this.append()
+    }
+    
+    dHeader() {
+        this.resultMessage += `<table>`
+        this.resultMessage += `<thead>`
+        this.resultMessage += `<tr>`
+        this.resultMessage += `<th scope="col">Year</th>`
+        this.resultMessage += `<th scope="col">Portfolio Beg. Value</th>`
+        this.resultMessage += `<th scope="col">Withdrawals</th>`
+        this.resultMessage += `<th scope="col">Portfolio Value</th>`
+        this.resultMessage += `<th scope="col">Market Gains/Losses</th>`
+        this.resultMessage += `<th scope="col">Portfolio Ending Value</th>`
+        this.resultMessage += `</tr>`
+        this.resultMessage += `</thead>`
+        this.resultMessage += `</table>`
+        document.getElementById('results').innerHTML = `${this.resultMessage}`;
+        let tbody = document.createElement('tbody');
+
+        document.querySelector(`table`).append(tbody)
+    }
+
+    append(){
+        let tr = document.createElement('tr');
+        tr.id = myPortfolio.currentYr;
+
+        // STOPPED HERE
+
+        this.lastRow.append(tr);
+        this.resultMessage = "";
+        this.resultMessage += `<th scope="row">The first year goes here</th>`
+        this.resultMessage += `<td>Hello world</td>`
+        this.resultMessage += `<td>testing where this append lands</td>`
+        this.resultMessage += `<td>4th</td>`
+        this.resultMessage += `<td>5th row</td>`
+        this.resultMessage += `<td>end of append</td>`
+        this.currentRow.innerHTML = this.resultMessage;
+    }
+
+    get currentRow() {
+        return document.getElementById(`${myPortfolio.currentYr}`)
+    }
+    get lastRow() {
+        return document.querySelector(`tbody`);
+    }
+
+}
+
+
+btnSubmit.addEventListener('click', () => { // this event handler takes all the user input fields once clicked, converts to numerical values, and stores them into classes
+    wdr = document.getElementById('wd_Rate').value.includes("%") ? true : false; // to check if withdrawal rate is user input as % or $
+    rReturn = convert2Num(document.getElementById('rReturn').value, true);
+    pValue = convert2Num(document.getElementById('pValue').value, false);
+    infl = convert2Num(document.getElementById('infl').value, true);
+    startDate = convert2Num(document.getElementById('startDate').value, false);
+    withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, wdr);
+    survivalDuration = convert2Num(document.getElementById('survival').value, false);
     sP500 = new Market(HISTORICAL, rReturn);
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
-
+    myResults = new Results(option_Selected());
 })
 
+
+/**
+ * 
+ * @returns the option user selected, as defined by the radio button
+ */
+function option_Selected() {
+    let radioInputs = document.querySelectorAll('input[type="radio"]');
+    for (input of radioInputs) {
+        if (input.checked) return input.id;
+    }
+};
