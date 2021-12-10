@@ -1,3 +1,5 @@
+// TODO : Do a year iteration to make sure it works, the "pro-forma" function.
+// TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Test the random year function iterating it many times to make sure it is accurate
 
 const btnSubmit = document.getElementById('submit');
@@ -127,7 +129,6 @@ class Market {
     get average_disp() {
         return `${parseFloat(this.average * 100).toFixed(2)}%` // returns the average in "pretty print"
     }
-
     get stdDeviation() {
         let difference = 0;
         let year = "";
@@ -138,6 +139,11 @@ class Market {
         return (difference / this.length);
     }
 
+    get annualReturn() { //gets the annual return of the market based on the simulation option supplied by the user
+        if (myResults.choose === "fixed") {
+            return this.rOr;
+        }
+    }
 
     /**
      * 
@@ -160,13 +166,27 @@ class Portfolio {
     constructor(pValue, infl, startDate, wdRate, survivalD) {
         this.pValue = pValue;
         this.infl = infl;
-        this.startDate = startDate;
-        this.wdRate = wdRate;
+        this.startYr = startDate;
+        this.currentYear = startDate;
         this.survivalD = survivalD;
+        this.finalYr = this.startYr + this.survivalD;
+        this.wdRate = wdRate;
+    }
+    get pValueMid() {
+        return this.pValue - this.wdAmount;
+    }
+    get return() {
+        return this.pValueMid * sP500.annualReturn;
+    }
+    get pValueEnd() {
+        return this.pValueMid + this.return;
     }
 
-    get currentYr() {
-        return this.startDate;
+    get wdAmount() {
+        if (this.wdRate <= 1) { // if withdrawal rate is expressed as decimal
+            return this.pValue * this.wdRate;
+        }
+        else return this.wdRate;
     }
 }
 
@@ -176,7 +196,6 @@ class Results {
         this.choose = choose;
         this.resultMessage = "";
         this.dHeader();
-        this.append()
     }
     
     dHeader() {
@@ -186,9 +205,11 @@ class Results {
         this.resultMessage += `<th scope="col">Year</th>`
         this.resultMessage += `<th scope="col">Portfolio Beg. Value</th>`
         this.resultMessage += `<th scope="col">Withdrawals</th>`
-        this.resultMessage += `<th scope="col">Portfolio Value</th>`
+        this.resultMessage += `<th scope="col">Portfolio Mid.Value</th>`
         this.resultMessage += `<th scope="col">Market Gains/Losses</th>`
         this.resultMessage += `<th scope="col">Portfolio Ending Value</th>`
+        this.resultMessage += `<th scope="col">Hypo % W/D Rate</th>`
+        this.resultMessage += `<th scope="col">Years Elapsed</th>`
         this.resultMessage += `</tr>`
         this.resultMessage += `</thead>`
         this.resultMessage += `</table>`
@@ -200,28 +221,41 @@ class Results {
 
     append(){
         let tr = document.createElement('tr');
-        tr.id = myPortfolio.currentYr;
-
-        // STOPPED HERE
-
+        tr.id = myPortfolio.currentYear;
         this.lastRow.append(tr);
         this.resultMessage = "";
-        this.resultMessage += `<th scope="row">The first year goes here</th>`
-        this.resultMessage += `<td>Hello world</td>`
-        this.resultMessage += `<td>testing where this append lands</td>`
-        this.resultMessage += `<td>4th</td>`
-        this.resultMessage += `<td>5th row</td>`
-        this.resultMessage += `<td>end of append</td>`
+        this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>`
+        this.resultMessage += `<td>$ ${myPortfolio.pValue}</td>`
+        this.resultMessage += `<td>$ ${myPortfolio.wdAmount}</td>`
+        this.resultMessage += `<td>$ ${myPortfolio.pValueMid}</td>`
+        this.resultMessage += `<td>$ ${myPortfolio.return}</td>`
+        this.resultMessage += `<td>$ ${myPortfolio.pValueEnd}</td>`
+        this.resultMessage += `<td>${myPortfolio.wdAmount / myPortfolio.pValue}</td>`
+        this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>`
         this.currentRow.innerHTML = this.resultMessage;
     }
 
     get currentRow() {
-        return document.getElementById(`${myPortfolio.currentYr}`)
+        return document.getElementById(`${myPortfolio.currentYear}`)
     }
     get lastRow() {
         return document.querySelector(`tbody`);
     }
 
+}
+
+/**
+ * This recursive function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
+ */
+function simulator() {
+    myResults.append();
+
+    myPortfolio.currentYear++;
+    myPortfolio.pValue = myPortfolio.pValueEnd;
+    if (myPortfolio.wdRate > 1) {  //is the class global scope? we shall see......
+        myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
+    }
+    if (myPortfolio.currentYear !== myPortfolio.finalYr) simulator();
 }
 
 
@@ -236,6 +270,7 @@ btnSubmit.addEventListener('click', () => { // this event handler takes all the 
     sP500 = new Market(HISTORICAL, rReturn);
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
     myResults = new Results(option_Selected());
+    simulator();  // runs the simulation
 })
 
 

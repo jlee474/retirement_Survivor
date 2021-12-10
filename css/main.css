@@ -23,3 +23,22 @@ input {
     max-width: 150px;
 }
 
+table {
+    margin: 10px auto;
+}
+thead th {
+    background: #8a97a0;
+    color: #FFF;
+    border: 1px solid teal;
+}
+tr {
+    background: #f4f7f8;
+    border-bottom: 1px solid #ffff;
+    margin-bottom: 5px;
+}
+tr:nth-child(even) {
+    background: #e8eeef;
+}
+td {
+    border: 1px rgb(170, 208, 233) groove;
+}

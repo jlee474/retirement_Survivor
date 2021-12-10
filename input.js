@@ -1,6 +1,10 @@
-// TODO: Clean up the convertStr function
+// TODO: Clean up the convertStr function to accept a value instead of html element, the boolean type to convert to, and the callback. see convert2num function; might be easier to create a new function and copy paste what you like, rather than try to edit the exisitng function. Reinvent the wheel so to speak.
+// TODO: Stop making input field values reset the cursor every time i edit the number
+// TODO: Base the inflation rate and annual return in decimal input, to keep it consistent with wd RAte. CAn format aftter selection change. 
+// TODO: convert the % withdrawal rate to a fixed figure
 // TODO: Prevent user from inputting multiple decimal periods.
 // TODO: Fix the initial withdrawal rate if a user enters something like 1000.55
+
 
 
 const inputField = document.querySelectorAll('input[type="text"]');
