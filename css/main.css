@@ -41,4 +41,5 @@ tr:nth-child(even) {
 }
 td {
     border: 1px rgb(170, 208, 233) groove;
+    text-align: center;
 }

@@ -1,6 +1,8 @@
 // TODO : Do a year iteration to make sure it works, the "pro-forma" function.
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Test the random year function iterating it many times to make sure it is accurate
+// TODO : remove portoflio WdAmount checking if decimal since in all cases it should never be a decimal. double check thought.
+
 
 const btnSubmit = document.getElementById('submit');
 const INIT_YEAR = 1926;
@@ -173,21 +175,25 @@ class Portfolio {
         this.wdRate = wdRate;
     }
     get pValueMid() {
-        return this.pValue - this.wdAmount;
+        return Math.max(this.pValue - this.wdAmount, 0);
     }
     get return() {
         return this.pValueMid * sP500.annualReturn;
     }
     get pValueEnd() {
-        return this.pValueMid + this.return;
+        return (this.pValueMid + this.return < 1) ? 0 : this.pValueMid + this.return;
     }
-
     get wdAmount() {
         if (this.wdRate <= 1) { // if withdrawal rate is expressed as decimal
             return this.pValue * this.wdRate;
         }
         else return this.wdRate;
     }
+    get wdRateHypo() {
+        if (this.pValue <= 0) return 0;
+        else return this.wdAmount / this.pValue;
+    }
+
 }
 
 
@@ -225,12 +231,12 @@ class Results {
         this.lastRow.append(tr);
         this.resultMessage = "";
         this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>`
-        this.resultMessage += `<td>$ ${myPortfolio.pValue}</td>`
-        this.resultMessage += `<td>$ ${myPortfolio.wdAmount}</td>`
-        this.resultMessage += `<td>$ ${myPortfolio.pValueMid}</td>`
-        this.resultMessage += `<td>$ ${myPortfolio.return}</td>`
-        this.resultMessage += `<td>$ ${myPortfolio.pValueEnd}</td>`
-        this.resultMessage += `<td>${myPortfolio.wdAmount / myPortfolio.pValue}</td>`
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>`
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.wdAmount, false)}</td>`
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueMid, false)}</td>`
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.return, false)}</td>`
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueEnd, false)}</td>`
+        this.resultMessage += `<td>${convert2Str(myPortfolio.wdRateHypo, true)} </td>`
         this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>`
         this.currentRow.innerHTML = this.resultMessage;
     }
@@ -249,7 +255,6 @@ class Results {
  */
 function simulator() {
     myResults.append();
-
     myPortfolio.currentYear++;
     myPortfolio.pValue = myPortfolio.pValueEnd;
     if (myPortfolio.wdRate > 1) {  //is the class global scope? we shall see......
@@ -260,12 +265,17 @@ function simulator() {
 
 
 btnSubmit.addEventListener('click', () => { // this event handler takes all the user input fields once clicked, converts to numerical values, and stores them into classes
-    wdr = document.getElementById('wd_Rate').value.includes("%") ? true : false; // to check if withdrawal rate is user input as % or $
+    let wdr = document.getElementById('wd_Rate');
+    if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
+        let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
+        let pVal = convert2Num(document.getElementById('pValue').value, false);
+        wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
+    }
     rReturn = convert2Num(document.getElementById('rReturn').value, true);
     pValue = convert2Num(document.getElementById('pValue').value, false);
     infl = convert2Num(document.getElementById('infl').value, true);
     startDate = convert2Num(document.getElementById('startDate').value, false);
-    withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, wdr);
+    withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
     survivalDuration = convert2Num(document.getElementById('survival').value, false);
     sP500 = new Market(HISTORICAL, rReturn);
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
