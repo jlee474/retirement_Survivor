@@ -1,8 +1,13 @@
+// TODO : Create a new class called time. This time class is only created in the beginning, and keeps track of all running iterations, results, etc. That way you can see how many years you had a positive win the market, how many years a negative win, and so forth.
+// TODO : Create loading button while waiting for results. Like please wait . . . 
+// TODO : create a timer for when addevent listener and finish time for 
 // TODO : Do a year iteration to make sure it works, the "pro-forma" function.
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Test the random year function iterating it many times to make sure it is accurate
 // TODO : remove portoflio WdAmount checking if decimal since in all cases it should never be a decimal. double check thought.
 // TODO : Add the new button as a separate function
+
+
 
 const btnSubmit = document.getElementById('submit');
 const HISTORICAL = {
@@ -164,7 +169,6 @@ class Market {
         // }
     }
 
-
     /**
      * 
      * @param {number} Start Year
@@ -216,12 +220,12 @@ class Portfolio {
 
 
 class Results {
-    constructor(choose) {
+    constructor(choose, scenario) {
         this.choose = choose;
         this.resultMessage = "";
-        this.dHeader();
         this.initial = true; // to keep track of initial iteration scenario for one whole portfolio duration. A value of true means it is the first in the series. 
-        this.scenario = 0; // represents one whole round, for whenn tthere is more than one table 
+        this.scenario = scenario; // represents one whole round, for whenn tthere is more than one table 
+        this.scenario === 0 ? this.dHeader() : ""; // only create the header in the first iteration. 
     }
     
     dHeader() {
@@ -256,17 +260,17 @@ class Results {
         if (this.choose === "sequential") {
             let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year
             let yearRoR = (sP500.year > LATEST_YEAR) ? sP500.rOr : sP500.historical[sP500.year]
-            this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>`
-            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(yearRoR,true)}</th>`
+            this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
+            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(yearRoR,true)}</th>` // Market Gain/Loss
         }
-        this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>`
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>`
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.wdAmount, false)}</td>`
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueMid, false)}</td>`
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.return, false)}</td>`
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueEnd, false)}</td>`
-        this.resultMessage += `<td>${convert2Str(myPortfolio.wdRateHypo, true)} </td>`
-        this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>`
+        this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>` // Year
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.wdAmount, false)}</td>` //Withdrawals
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.return, false)}</td>` // market gains/losses
+        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueEnd, false)}</td>` // Portfolio End
+        this.resultMessage += `<td>${convert2Str(myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
+        this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
         this.currentRow.innerHTML = this.resultMessage;
         
         if (this.initial && this.choose === "sequential") {  // to check if its the initial row with data
@@ -278,6 +282,14 @@ class Results {
             nElement.append(nButton)
             nElement.classList.add('collapseDivBtn'); // see CSS styling class
             nButton.classList.add('collapseBtn') // see CSS styling class
+
+
+
+            //debugger;  //may need to specify selector in tbody, might want to use descendent selecor
+
+
+
+
             let tbody = document.querySelector('tbody');
             tbody.insertAdjacentElement('afterbegin', nElement);
             expand(nButton); // function to add the event handler and functionality
@@ -337,28 +349,25 @@ function simulator() {
     } else if (myResults.choose === "sequential") {
         myResults.appendBlank();
         myResults.scenario++;
-        // need to add some function here to reset all values 
-        
-        
-
-        // setValues(myResults.scenario);
-        // if (myResults.scenario + INIT_YEAR < LATEST_YEAR) simulator();
-
-
-
-
-
-
-
-
-
+        setValues(myResults.scenario);
+        if (myResults.scenario + INIT_YEAR < LATEST_YEAR) simulator();
+        else console.log(performance.now())
 
     }
 }
 
 
 btnSubmit.addEventListener('click', () => { // this event handler takes all the user input fields once clicked, converts to numerical values, and stores them into classes
+    console.log(performance.now())
     let wdr = document.getElementById('wd_Rate');
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
     if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
         let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
         let pVal = convert2Num(document.getElementById('pValue').value, false);
@@ -372,8 +381,13 @@ btnSubmit.addEventListener('click', () => { // this event handler takes all the 
     let survivalDuration = convert2Num(document.getElementById('survival').value, false);
     sP500 = new Market(HISTORICAL, rReturn, INIT_YEAR);
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
-    myResults = new Results(option_Selected());
+    myResults = new Results(option_Selected(), 0);
     simulator();  // runs the simulation
+
+
+
+
+
 })
 
 
@@ -400,7 +414,7 @@ function setValues(iteration) {
     let survivalDuration = convert2Num(document.getElementById('survival').value, false);
     sP500 = new Market(HISTORICAL, rReturn, iteration + INIT_YEAR);
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
-    myResults = new Results(option_Selected());
+    myResults = new Results(option_Selected(), iteration);
 
 
 
