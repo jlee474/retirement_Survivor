@@ -2,11 +2,9 @@
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Test the random year function iterating it many times to make sure it is accurate
 // TODO : remove portoflio WdAmount checking if decimal since in all cases it should never be a decimal. double check thought.
-
+// TODO : Add the new button as a separate function
 
 const btnSubmit = document.getElementById('submit');
-const INIT_YEAR = 1926;
-const LATEST_YEAR = 2021;
 const HISTORICAL = {
     2021:	0.2646,
     2020:	0.184,
@@ -103,16 +101,24 @@ const HISTORICAL = {
     1929:	-0.0842,
     1928:	0.4361,
     1927:	0.3749,
-    1926:	0.1162};
+    1926:	0.1162
+};
+
 let sP500 = {};
 let myPortfolio = {};
+const INIT_YEAR = parseInt( Object.keys(HISTORICAL)[0] ); // get the earliest first year in the HISTORICAL Object
+const LATEST_YEAR = parseInt( Object.keys(HISTORICAL)[Object.keys(HISTORICAL).length - 1] ); // get the latest year in the HISTORICAL Object
+const EXPAND = "Expand +"
+const COLLAPSE = "Collapse -"
+
 
 class Market {
-    constructor(historical, rOr) {
+    constructor(historical, rOr, year) {
         this.historical = {...historical}
         this.rOr = rOr //rOr = rate of return, supplied by user
+        this.year = parseInt(year) // the market return year
     }
-
+    
     /**
      * returns the length of the object of annual returns
      */
@@ -142,10 +148,22 @@ class Market {
     }
 
     get annualReturn() { //gets the annual return of the market based on the simulation option supplied by the user
-        if (myResults.choose === "fixed") {
-            return this.rOr;
+        switch (myResults.choose) {
+            case "fixed":
+                return this.rOr;
+            case "sequential":
+                return this.year <= LATEST_YEAR ? this.historical[this.year] : this.rOr; //gets the annual return of the sP500 year, but if future year, it returns the default rate specified by user
+            default:
+                alert("error code #dddg$15v73 in Class sP500 get annualReturn() method");
+                break;
         }
+        
+        
+        // if (myResults.choose === "fixed") {
+        //     return this.rOr;
+        // }
     }
+
 
     /**
      * 
@@ -202,34 +220,45 @@ class Results {
         this.choose = choose;
         this.resultMessage = "";
         this.dHeader();
+        this.initial = true; // to keep track of initial iteration scenario for one whole portfolio duration. A value of true means it is the first in the series. 
+        this.scenario = 0; // represents one whole round, for whenn tthere is more than one table 
     }
     
     dHeader() {
         this.resultMessage += `<table>`
         this.resultMessage += `<thead>`
-        this.resultMessage += `<tr>`
+        this.resultMessage += `<tr>`;
+        if (this.choose === "sequential") {
+            this.resultMessage += `<th scope="col" class="td_small">(S&P500 <br> Year)</th>`
+            this.resultMessage += `<th scope="col" class="td_small">(Pct <br>Gains/Loss)</th>`
+        }
         this.resultMessage += `<th scope="col">Year</th>`
-        this.resultMessage += `<th scope="col">Portfolio Beg. Value</th>`
+        this.resultMessage += `<th scope="col">Portfolio <br>Beg. Value</th>`
         this.resultMessage += `<th scope="col">Withdrawals</th>`
-        this.resultMessage += `<th scope="col">Portfolio Mid.Value</th>`
-        this.resultMessage += `<th scope="col">Market Gains/Losses</th>`
-        this.resultMessage += `<th scope="col">Portfolio Ending Value</th>`
-        this.resultMessage += `<th scope="col">Hypo % W/D Rate</th>`
-        this.resultMessage += `<th scope="col">Years Elapsed</th>`
+        this.resultMessage += `<th scope="col">Portfolio <br>Mid. Value</th>`
+        this.resultMessage += `<th scope="col">Market <br>Gains/Losses</th>`
+        this.resultMessage += `<th scope="col">Portfolio <br>End. Value</th>`
+        this.resultMessage += `<th scope="col">Hypo % <br>W/D Rate</th>`
+        this.resultMessage += `<th scope="col">Years <br>Elapsed</th>`
         this.resultMessage += `</tr>`
         this.resultMessage += `</thead>`
         this.resultMessage += `</table>`
         document.getElementById('results').innerHTML = `${this.resultMessage}`;
         let tbody = document.createElement('tbody');
-
         document.querySelector(`table`).append(tbody)
     }
 
     append(){
         let tr = document.createElement('tr');
-        tr.id = myPortfolio.currentYear;
+        tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
         this.lastRow.append(tr);
         this.resultMessage = "";
+        if (this.choose === "sequential") {
+            let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year
+            let yearRoR = (sP500.year > LATEST_YEAR) ? sP500.rOr : sP500.historical[sP500.year]
+            this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>`
+            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(yearRoR,true)}</th>`
+        }
         this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>`
         this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>`
         this.resultMessage += `<td>$ ${convert2Str(myPortfolio.wdAmount, false)}</td>`
@@ -239,10 +268,54 @@ class Results {
         this.resultMessage += `<td>${convert2Str(myPortfolio.wdRateHypo, true)} </td>`
         this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>`
         this.currentRow.innerHTML = this.resultMessage;
+        
+        if (this.initial && this.choose === "sequential") {  // to check if its the initial row with data
+            //this following section adds a button next to the table to expand/collapse
+            this.initial = false;
+            let nElement = document.createElement('div');
+            let nButton = document.createElement('button');
+            nButton.textContent = `${EXPAND}`;
+            nElement.append(nButton)
+            nElement.classList.add('collapseDivBtn'); // see CSS styling class
+            nButton.classList.add('collapseBtn') // see CSS styling class
+            let tbody = document.querySelector('tbody');
+            tbody.insertAdjacentElement('afterbegin', nElement);
+            expand(nButton); // function to add the event handler and functionality
+
+        } else if (this.choose === "sequential") {
+            document.querySelector('tbody').lastElementChild.classList.add('collapsible')
+            
+        }
+    }
+
+
+    appendBlank() {
+        let tr = document.createElement('tr');
+        tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
+        tr.classList.add('blankRow')
+        this.lastRow.append(tr);
+        this.resultMessage = "";
+        if (this.choose === "sequential") {
+            let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year
+            let yearRoR = (sP500.year > LATEST_YEAR) ? sP500.rOr : sP500.historical[sP500.year]
+            this.resultMessage += `<td scope="col" class="td_small"></th>`
+            this.resultMessage += `<td scope="col" class="td_small"></th>`
+        }
+        this.resultMessage += `<th scope="row"></th>`
+        this.resultMessage += `<td></td>`
+        this.resultMessage += `<td></td>`
+        this.resultMessage += `<td></td>`
+        this.resultMessage += `<td></td>`
+        this.resultMessage += `<td></td>`
+        this.resultMessage += `<td></td>`
+        this.resultMessage += `<td></td>`
+        this.currentRow.innerHTML = this.resultMessage;
+        // document.querySelector('tbody').lastElementChild.classList.add('collapsible')
+        this.initial = true;
     }
 
     get currentRow() {
-        return document.getElementById(`${myPortfolio.currentYear}`)
+        return document.getElementById(`${this.scenario}-${myPortfolio.currentYear}`)
     }
     get lastRow() {
         return document.querySelector(`tbody`);
@@ -257,10 +330,30 @@ function simulator() {
     myResults.append();
     myPortfolio.currentYear++;
     myPortfolio.pValue = myPortfolio.pValueEnd;
-    if (myPortfolio.wdRate > 1) {  //is the class global scope? we shall see......
-        myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
+    myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
+    if (myResults.choose === "sequential") sP500.year++;
+    if (myPortfolio.currentYear !== myPortfolio.finalYr) {
+        simulator();
+    } else if (myResults.choose === "sequential") {
+        myResults.appendBlank();
+        myResults.scenario++;
+        // need to add some function here to reset all values 
+        
+        
+
+        // setValues(myResults.scenario);
+        // if (myResults.scenario + INIT_YEAR < LATEST_YEAR) simulator();
+
+
+
+
+
+
+
+
+
+
     }
-    if (myPortfolio.currentYear !== myPortfolio.finalYr) simulator();
 }
 
 
@@ -271,17 +364,73 @@ btnSubmit.addEventListener('click', () => { // this event handler takes all the 
         let pVal = convert2Num(document.getElementById('pValue').value, false);
         wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
     }
-    rReturn = convert2Num(document.getElementById('rReturn').value, true);
-    pValue = convert2Num(document.getElementById('pValue').value, false);
-    infl = convert2Num(document.getElementById('infl').value, true);
-    startDate = convert2Num(document.getElementById('startDate').value, false);
-    withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
-    survivalDuration = convert2Num(document.getElementById('survival').value, false);
-    sP500 = new Market(HISTORICAL, rReturn);
+    let rReturn = convert2Num(document.getElementById('rReturn').value, true);
+    let pValue = convert2Num(document.getElementById('pValue').value, false);
+    let infl = convert2Num(document.getElementById('infl').value, true);
+    let startDate = convert2Num(document.getElementById('startDate').value, false);
+    let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
+    let survivalDuration = convert2Num(document.getElementById('survival').value, false);
+    sP500 = new Market(HISTORICAL, rReturn, INIT_YEAR);
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
     myResults = new Results(option_Selected());
     simulator();  // runs the simulation
 })
+
+
+
+
+
+
+
+
+
+// this function will set the initial or repeat values. once ready, can delete the duplicate lines on the button submit and call this function instead. 
+function setValues(iteration) {
+    let wdr = document.getElementById('wd_Rate');
+    if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
+        let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
+        let pVal = convert2Num(document.getElementById('pValue').value, false);
+        wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
+    }
+    let rReturn = convert2Num(document.getElementById('rReturn').value, true);
+    let pValue = convert2Num(document.getElementById('pValue').value, false);
+    let infl = convert2Num(document.getElementById('infl').value, true);
+    let startDate = convert2Num(document.getElementById('startDate').value, false);
+    let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
+    let survivalDuration = convert2Num(document.getElementById('survival').value, false);
+    sP500 = new Market(HISTORICAL, rReturn, iteration + INIT_YEAR);
+    myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
+    myResults = new Results(option_Selected());
+
+
+
+
+
+
+
+
+
+
+}
+
+
+// function adds event listener and functionality to the expands/collapse button
+function expand(element, callback) {
+    element.addEventListener('click', (e) => {
+        if (e.target.textContent === EXPAND) {
+            e.target.textContent = COLLAPSE;
+            for (element of document.getElementsByClassName('collapsible')) {
+                element.style.display = "table-row";
+            }  
+        } else if (e.target.textContent === COLLAPSE) {
+            e.target.textContent = EXPAND;
+            for (element of document.getElementsByClassName('collapsible')) {
+                element.style.display = "";
+            }
+        }
+    } )
+    callback; //optional callback
+}
 
 
 /**

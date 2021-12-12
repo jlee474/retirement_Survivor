@@ -1,3 +1,6 @@
+/* TODO: add sticky table header when scrolling down */
+
+
 html {
     box-sizing: border-box;
 }
@@ -30,6 +33,7 @@ thead th {
     background: #8a97a0;
     color: #FFF;
     border: 1px solid teal;
+    padding: 6px;
 }
 tr {
     background: #f4f7f8;
@@ -41,5 +45,27 @@ tr:nth-child(even) {
 }
 td {
     border: 1px rgb(170, 208, 233) groove;
+    padding: 2px;
     text-align: center;
+}
+.td_small {
+    font-size: .90rem;
+    font-style: italic;
+}
+
+.collapsible {
+    display: none;
+}
+
+.collapseDivBtn {
+    position: relative;
+    left: -100px;
+}
+.collapseBtn {
+    position: absolute;
+    white-space: nowrap;
+}
+
+.blankRow {
+    height: 15px;
 }
