@@ -1,4 +1,6 @@
 // TODO: Stop making input field values reset the cursor every time i edit the number in WD RATE
+// TODO: Feature to add start and stop years
+// TODO: Feature to vary withdrawal in a downmarket year
 // TODO: The inflation and wdRate need to go to edit mode when user edits, in order to retain the decimal and % after edit is complete. because it will change the value when user edits a digit
 // TODO: Prevent user from inputting multiple decimal periods.
 // TODO: Fix the initial withdrawal rate if a user enters something like 1000.55 and focus out/focus in/focus out
@@ -57,8 +59,6 @@ for (element of pct) {
         }
     })
 }
-
-
 
 
 function inputValidator(target, callback) {  // this first. it will basically fix the input as the user is typing it in.

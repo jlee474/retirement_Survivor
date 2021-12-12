@@ -1,8 +1,9 @@
 // TODO : Create a new class called time. This time class is only created in the beginning, and keeps track of all running iterations, results, etc. That way you can see how many years you had a positive win the market, how many years a negative win, and so forth.
+// TODO : Create a button that shows the final year result as the header instead of the inital year result as the header
 // TODO : Create loading button while waiting for results. Like please wait . . . 
 // TODO : create a timer for when addevent listener and finish time for 
-// TODO : Do a year iteration to make sure it works, the "pro-forma" function.
 // TODO : Make sure calculate button does not run if not all inputs are entered
+// TODO : Add a rightside note whether portfolio failed
 // TODO : Test the random year function iterating it many times to make sure it is accurate
 // TODO : remove portoflio WdAmount checking if decimal since in all cases it should never be a decimal. double check thought.
 // TODO : Add the new button as a separate function
@@ -113,8 +114,10 @@ let sP500 = {};
 let myPortfolio = {};
 const INIT_YEAR = parseInt( Object.keys(HISTORICAL)[0] ); // get the earliest first year in the HISTORICAL Object
 const LATEST_YEAR = parseInt( Object.keys(HISTORICAL)[Object.keys(HISTORICAL).length - 1] ); // get the latest year in the HISTORICAL Object
-const EXPAND = "Expand +"
-const COLLAPSE = "Collapse -"
+const EXPAND = "+"
+const COLLAPSE = "-"
+const EXPANDALL = "Expand All ..."
+const COLLAPSEALL = "Collapse All ..."
 
 
 class Market {
@@ -253,6 +256,21 @@ class Results {
     }
 
     append(){
+
+        if (this.initial && this.choose === "sequential") {  // to check if its the initial row with data
+            //this following section adds a button next to the table to expand/collapse
+            let nElement = document.createElement('div');
+            let nButton = document.createElement('button');
+            nButton.id = `btn${this.scenario}-${myPortfolio.currentYear}`
+            nButton.textContent = `${EXPAND}`;
+            nElement.append(nButton)
+            nElement.classList.add('collapseDivBtn'); // see CSS styling class
+            nButton.classList.add('collapseBtn') // see CSS styling class
+            let tbody = document.querySelector('tbody');
+            tbody.insertAdjacentElement('beforeend', nElement);
+            expand(nButton); // function to add the event handler and functionality
+        }
+
         let tr = document.createElement('tr');
         tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
         this.lastRow.append(tr);
@@ -273,31 +291,11 @@ class Results {
         this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
         this.currentRow.innerHTML = this.resultMessage;
         
-        if (this.initial && this.choose === "sequential") {  // to check if its the initial row with data
-            //this following section adds a button next to the table to expand/collapse
-            this.initial = false;
-            let nElement = document.createElement('div');
-            let nButton = document.createElement('button');
-            nButton.textContent = `${EXPAND}`;
-            nElement.append(nButton)
-            nElement.classList.add('collapseDivBtn'); // see CSS styling class
-            nButton.classList.add('collapseBtn') // see CSS styling class
-
-
-
-            //debugger;  //may need to specify selector in tbody, might want to use descendent selecor
-
-
-
-
-            let tbody = document.querySelector('tbody');
-            tbody.insertAdjacentElement('afterbegin', nElement);
-            expand(nButton); // function to add the event handler and functionality
-
-        } else if (this.choose === "sequential") {
+        if (this.choose === "sequential" && !this.initial) {
             document.querySelector('tbody').lastElementChild.classList.add('collapsible')
-            
         }
+        this.initial = false;
+        
     }
 
 
@@ -428,23 +426,54 @@ function setValues(iteration) {
 }
 
 
-// function adds event listener and functionality to the expands/collapse button
+/**
+ * 
+ * @param {element} element the element for which the event handler will be added
+ * @param {*} callback an optional callback function
+ * @returns undefined. This function simply sets the event handler to the element.
+ */
 function expand(element, callback) {
     element.addEventListener('click', (e) => {
         if (e.target.textContent === EXPAND) {
             e.target.textContent = COLLAPSE;
-            for (element of document.getElementsByClassName('collapsible')) {
-                element.style.display = "table-row";
-            }  
+            getAllSiblingsofType(e.target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
+                for (ele of arr) {
+                    ele.style.display = "table-row";
+                }
+            }); 
         } else if (e.target.textContent === COLLAPSE) {
             e.target.textContent = EXPAND;
-            for (element of document.getElementsByClassName('collapsible')) {
-                element.style.display = "";
-            }
+            getAllSiblingsofType(e.target.parentNode, 'tr', arr => {
+                for (ele of arr) {
+                    ele.style.display = "";
+                }
+            });
         }
-    } )
+    })
     callback; //optional callback
 }
+
+
+
+
+/**
+ * 
+ * @param {element} target the element starting reference for which the sibling elements will be based
+ * @param {string} tagname the tagname in string format (e.g. 'div') of the siblings to include in the query
+ * @param {*} callback an optional callback function, with the result as the argument 
+ * @returns an array of the subsequent consecutive sibling elements that match the tagname query 
+ */
+function getAllSiblingsofType(target, tagname, callback) {
+    let qArray = []; // the array of query results
+    tagname = tagname.toUpperCase();
+    let nElemSibling = target.nextElementSibling;
+    while (nElemSibling.tagName.toUpperCase() === tagname) {
+        qArray.push(nElemSibling);
+        nElemSibling = nElemSibling.nextElementSibling; // move the target down to the next element to check
+    }
+    return (callback != undefined) ? callback(qArray) : qArray; // if callback function present, return it with the result as the argument
+}
+
 
 
 /**
