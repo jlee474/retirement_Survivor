@@ -404,12 +404,10 @@ function simulator() {
  */
 function updateResults() {
     let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
-
-    debugger;
-
-    // need to use regEx expression to get the span id and parse it out to just get the sceenario or iteration value
-
-
+    for (element of passFailArray) {
+        let id = parseInt(element.id.slice(4,6)); // need to use regEx expression to get the span id and parse it out to just get the sceenario or iteration value
+        let lastIndex = MASTER_RECORDS[id].length - 1
+        console.log(` the iteration is ${id}. the last porfolio value is ${MASTER_RECORDS[id][lastIndex].PortfolioEnd}`)
 
 
 
@@ -418,7 +416,12 @@ function updateResults() {
 
 
 
+    }
 
+
+
+
+    
 }
 
 
