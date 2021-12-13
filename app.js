@@ -1,7 +1,9 @@
 // TODO : Create a new class called time. This time class is only created in the beginning, and keeps track of all running iterations, results, etc. That way you can see how many years you had a positive win the market, how many years a negative win, and so forth.
-// TODO : Create a button that shows the final year result as the header instead of the inital year result as the header
+// TODO : Convert the simulator() function from recursive to iterative. I think recursion uses too much memory
+// TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
+// TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create loading button while waiting for results. Like please wait . . . 
-// TODO : create a timer for when addevent listener and finish time for 
+// TODO : Debug on chronological sequential option, the last button to expand does not work.
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Add a rightside note whether portfolio failed
 // TODO : Test the random year function iterating it many times to make sure it is accurate
@@ -119,6 +121,27 @@ const COLLAPSE = "-"
 const EXPANDALL = "Expand All ..."
 const COLLAPSEALL = "Collapse All ..."
 
+let MASTER_RECORDS = [ ]; 
+/* conceptual design of the array holding the master result records. 
+let MASTER_RECORDS = [ iteration 0
+                            [
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                            ],
+                      iteration 1 
+                            [   
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                            ]
+                        ] 
+*/
+
 
 class Market {
     constructor(historical, rOr, year) {
@@ -160,16 +183,14 @@ class Market {
             case "fixed":
                 return this.rOr;
             case "sequential":
-                return this.year <= LATEST_YEAR ? this.historical[this.year] : this.rOr; //gets the annual return of the sP500 year, but if future year, it returns the default rate specified by user
+                return this.year <= LATEST_YEAR ? this.historical[this.year] : this.rOr; //gets the annual return of the sP500 year, but if future year, it returns the default rate specified by user // may need to adjust this with the loop checked option 
+
+
+
             default:
                 alert("error code #dddg$15v73 in Class sP500 get annualReturn() method");
                 break;
         }
-        
-        
-        // if (myResults.choose === "fixed") {
-        //     return this.rOr;
-        // }
     }
 
     /**
@@ -227,12 +248,13 @@ class Results {
         this.choose = choose;
         this.resultMessage = "";
         this.initial = true; // to keep track of initial iteration scenario for one whole portfolio duration. A value of true means it is the first in the series. 
-        this.scenario = scenario; // represents one whole round, for whenn tthere is more than one table 
+        this.scenario = scenario; // represents one whole round, for whenn there is more than one table 
         this.scenario === 0 ? this.dHeader() : ""; // only create the header in the first iteration. 
     }
     
     dHeader() {
         this.resultMessage += `<table>`
+        this.resultMessage += `<caption id="caption"> PLACE HOLDER CAPTION TEXT HERE!! </caption>`
         this.resultMessage += `<thead>`
         this.resultMessage += `<tr>`;
         if (this.choose === "sequential") {
@@ -256,30 +278,43 @@ class Results {
     }
 
     append(){
+        if (this.initial && this.choose === "sequential") {  // adds the buttons and side result text. to check if its the initial row with data
+            let spWrapEle = document.createElement('div');
+            let nSpan = document.createElement('span');
+            nSpan.style.display = "none" // to prevent rendering the display until the position has been set
+            nSpan.id = `span${this.scenario}-${myPortfolio.currentYear}`
+            nSpan.innerHTML = ` Pass or Fail placeholder text here `;
+            spWrapEle.append(nSpan)
+            spWrapEle.classList.add('tempPlaceHolderWrapperClass'); // see CSS styling class
+            nSpan.classList.add('tempPlaceHolderSpanClass') // see CSS styling class
+            this.tBody.insertAdjacentElement('beforeend', spWrapEle);
+            setTimeout(  ()=> { 
+                nSpan.style.display = "";
+                spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
+            }, 0 ) // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
 
-        if (this.initial && this.choose === "sequential") {  // to check if its the initial row with data
+            // The section below adds a new expand/collapse side button. The section above adds text result display on side
+
             //this following section adds a button next to the table to expand/collapse
-            let nElement = document.createElement('div');
+            let btnWrapEle = document.createElement('div');
             let nButton = document.createElement('button');
             nButton.id = `btn${this.scenario}-${myPortfolio.currentYear}`
             nButton.textContent = `${EXPAND}`;
-            nElement.append(nButton)
-            nElement.classList.add('collapseDivBtn'); // see CSS styling class
+            btnWrapEle.append(nButton)
+            btnWrapEle.classList.add('collapseDivBtn'); // see CSS styling class
             nButton.classList.add('collapseBtn') // see CSS styling class
-            let tbody = document.querySelector('tbody');
-            tbody.insertAdjacentElement('beforeend', nElement);
+            this.tBody.insertAdjacentElement('beforeend', btnWrapEle);
             expand(nButton); // function to add the event handler and functionality
         }
 
-        let tr = document.createElement('tr');
+        let tr = document.createElement('tr'); //creating new table row
         tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
-        this.lastRow.append(tr);
+        this.tBody.append(tr); //append the new table row to the end of the table body
         this.resultMessage = "";
         if (this.choose === "sequential") {
-            let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year
-            let yearRoR = (sP500.year > LATEST_YEAR) ? sP500.rOr : sP500.historical[sP500.year]
+            let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year;  // this needs to all be handled at the Class Market level
             this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
-            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(yearRoR,true)}</th>` // Market Gain/Loss
+            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(sP500.annualReturn,true)}</th>` // Market Gain/Loss
         }
         this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>` // Year
         this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
@@ -291,19 +326,17 @@ class Results {
         this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
         this.currentRow.innerHTML = this.resultMessage;
         
-        if (this.choose === "sequential" && !this.initial) {
+        if (this.choose === "sequential" && !this.initial) { // if this is a chronological/sequential display and not the first row 
             document.querySelector('tbody').lastElementChild.classList.add('collapsible')
         }
-        this.initial = false;
-        
+        this.initial = false; // after this method has run, the next run won't be the initial
     }
-
 
     appendBlank() {
         let tr = document.createElement('tr');
         tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
         tr.classList.add('blankRow')
-        this.lastRow.append(tr);
+        this.tBody.append(tr);
         this.resultMessage = "";
         if (this.choose === "sequential") {
             let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year
@@ -320,16 +353,21 @@ class Results {
         this.resultMessage += `<td></td>`
         this.resultMessage += `<td></td>`
         this.currentRow.innerHTML = this.resultMessage;
-        // document.querySelector('tbody').lastElementChild.classList.add('collapsible')
+        // document.querySelector('tbody').lastElementChild.classList.add('collapsible')   <-- add this if you want to collapse the blank row as well
         this.initial = true;
     }
 
     get currentRow() {
         return document.getElementById(`${this.scenario}-${myPortfolio.currentYear}`)
     }
-    get lastRow() {
+    get tBody() {
         return document.querySelector(`tbody`);
     }
+    
+    // get spanResultMessage() {
+    //     return document.querySelector(`#span${this.scenario}-${myPortfolio.currentYear}`)
+    // }
+
 
 }
 
@@ -338,6 +376,7 @@ class Results {
  */
 function simulator() {
     myResults.append();
+    recordResult();
     myPortfolio.currentYear++;
     myPortfolio.pValue = myPortfolio.pValueEnd;
     myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
@@ -349,54 +388,99 @@ function simulator() {
         myResults.scenario++;
         setValues(myResults.scenario);
         if (myResults.scenario + INIT_YEAR < LATEST_YEAR) simulator();
-        else console.log(performance.now())
+        else {
+            console.log(performance.now())
+            setTimeout(() => { //set timeout since the result span text also has it
+                updateResults();
+            }, 0);
+        }
 
     }
 }
 
 
+/**
+ * The purpose of this function is to update the results of all the scenarios
+ */
+function updateResults() {
+    let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
+
+    debugger;
+
+    // need to use regEx expression to get the span id and parse it out to just get the sceenario or iteration value
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+/**
+ * @returns : Updates the master result array 
+ */
+function recordResult() {
+    
+    let scenario = myResults.scenario // the scenario or iteration being run
+
+    if (typeof scenario !== "number") alert("Something may go wrong in the program. code ref 4&vv&je@687")
+    
+    MASTER_RECORDS.length < scenario + 1 ? MASTER_RECORDS[scenario] = [] : ""; // to first create the empty array space if not done so already
+    let currentRow = myPortfolio.currentYear - myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
+    MASTER_RECORDS[scenario][currentRow] === undefined ? MASTER_RECORDS[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
+
+18    // CREATE OBJECT HERE to be inserted based on the values below
+    let object = {
+        MktYear : sP500.year,
+        Return : sP500.annualReturn,
+        PortfolioYr : myPortfolio.currentYear,
+        PortfolioBeg : myPortfolio.pValue,
+        Withdrawal : myPortfolio.wdAmount,
+        PortfolioMid : myPortfolio.pValue,
+        MktGainsLoss : myPortfolio.return,
+        PortfolioEnd : myPortfolio.pValueEnd,
+        HypoWD : myPortfolio.wdRateHypo,
+        YearsElapsed : currentRow + 1
+    }
+
+    MASTER_RECORDS[scenario][currentRow] = {...object}
+
+    // if (this.choose === "sequential") {
+    //     let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year;  // this needs to all be handled at the Class Market level
+    //     this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
+    //     this.resultMessage += `<td scope="col" class="td_small">${convert2Str(sP500.annualReturn,true)}</th>` // Market Gain/Loss
+    // }
+    // this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>` // Year
+    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
+    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.wdAmount, false)}</td>` //Withdrawals
+    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
+    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.return, false)}</td>` // market gains/losses
+    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueEnd, false)}</td>` // Portfolio End
+    // this.resultMessage += `<td>${convert2Str(myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
+    // this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
+
+}
+
+
+
 btnSubmit.addEventListener('click', () => { // this event handler takes all the user input fields once clicked, converts to numerical values, and stores them into classes
     console.log(performance.now())
-    let wdr = document.getElementById('wd_Rate');
- 
- 
- 
- 
- 
- 
- 
- 
-    if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
-        let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
-        let pVal = convert2Num(document.getElementById('pValue').value, false);
-        wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
-    }
-    let rReturn = convert2Num(document.getElementById('rReturn').value, true);
-    let pValue = convert2Num(document.getElementById('pValue').value, false);
-    let infl = convert2Num(document.getElementById('infl').value, true);
-    let startDate = convert2Num(document.getElementById('startDate').value, false);
-    let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
-    let survivalDuration = convert2Num(document.getElementById('survival').value, false);
-    sP500 = new Market(HISTORICAL, rReturn, INIT_YEAR);
-    myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
-    myResults = new Results(option_Selected(), 0);
+    setValues(0); // pass argument of 0 as it would be the first initial iteration
     simulator();  // runs the simulation
-
-
-
-
-
 })
 
 
 
-
-
-
-
-
-
-// this function will set the initial or repeat values. once ready, can delete the duplicate lines on the button submit and call this function instead. 
+/**
+ * 
+ * @param {number} iteration which iteration of the simulation. One iteration goes through an entire scenario. Not relevant if simulation is based on fixed rate of return
+ */
 function setValues(iteration) {
     let wdr = document.getElementById('wd_Rate');
     if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
@@ -413,16 +497,6 @@ function setValues(iteration) {
     sP500 = new Market(HISTORICAL, rReturn, iteration + INIT_YEAR);
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
     myResults = new Results(option_Selected(), iteration);
-
-
-
-
-
-
-
-
-
-
 }
 
 
@@ -454,14 +528,12 @@ function expand(element, callback) {
 }
 
 
-
-
 /**
  * 
  * @param {element} target the element starting reference for which the sibling elements will be based
  * @param {string} tagname the tagname in string format (e.g. 'div') of the siblings to include in the query
  * @param {*} callback an optional callback function, with the result as the argument 
- * @returns an array of the subsequent consecutive sibling elements that match the tagname query 
+ * @returns an array of the SUBSEQUENT CONSECUTIVE sibling elements that match the tagname query 
  */
 function getAllSiblingsofType(target, tagname, callback) {
     let qArray = []; // the array of query results
@@ -473,8 +545,6 @@ function getAllSiblingsofType(target, tagname, callback) {
     }
     return (callback != undefined) ? callback(qArray) : qArray; // if callback function present, return it with the result as the argument
 }
-
-
 
 /**
  * 

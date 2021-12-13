@@ -65,6 +65,14 @@ td {
     position: absolute;
     white-space: nowrap;
 }
+.tempPlaceHolderWrapperClass {
+    position: relative;
+    /* left: 900px;  <- the position adjustment will be dynamically determined based on the table row width */
+}
+.tempPlaceHolderSpanClass {
+    position: absolute;
+    white-space: nowrap;
+}
 
 .blankRow {
     height: 15px;
