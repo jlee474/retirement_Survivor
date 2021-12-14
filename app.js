@@ -3,12 +3,14 @@
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create loading button while waiting for results. Like please wait . . . 
+// TODO : Loading results caption fix on fixed rate of return option
 // TODO : Debug on chronological sequential option, the last button to expand does not work.
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Add a rightside note whether portfolio failed
 // TODO : Test the random year function iterating it many times to make sure it is accurate
 // TODO : remove portoflio WdAmount checking if decimal since in all cases it should never be a decimal. double check thought.
 // TODO : Add the new button as a separate function
+// TODO : Add feature to export results to spreadsheet
 
 
 
@@ -250,11 +252,12 @@ class Results {
         this.initial = true; // to keep track of initial iteration scenario for one whole portfolio duration. A value of true means it is the first in the series. 
         this.scenario = scenario; // represents one whole round, for whenn there is more than one table 
         this.scenario === 0 ? this.dHeader() : ""; // only create the header in the first iteration. 
+        this.pass = 0; // TODO : See if this should be moved to a different class eventually
     }
     
     dHeader() {
         this.resultMessage += `<table>`
-        this.resultMessage += `<caption id="caption"> PLACE HOLDER CAPTION TEXT HERE!! </caption>`
+        this.resultMessage += `<caption id="caption"> Loading results ... </caption>`
         this.resultMessage += `<thead>`
         this.resultMessage += `<tr>`;
         if (this.choose === "sequential") {
@@ -283,13 +286,12 @@ class Results {
             let nSpan = document.createElement('span');
             nSpan.style.display = "none" // to prevent rendering the display until the position has been set
             nSpan.id = `span${this.scenario}-${myPortfolio.currentYear}`
-            nSpan.innerHTML = ` Pass or Fail placeholder text here `;
+            nSpan.innerHTML = "";
             spWrapEle.append(nSpan)
             spWrapEle.classList.add('tempPlaceHolderWrapperClass'); // see CSS styling class
             nSpan.classList.add('tempPlaceHolderSpanClass') // see CSS styling class
             this.tBody.insertAdjacentElement('beforeend', spWrapEle);
             setTimeout(  ()=> { 
-                nSpan.style.display = "";
                 spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
             }, 0 ) // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
 
@@ -363,6 +365,12 @@ class Results {
     get tBody() {
         return document.querySelector(`tbody`);
     }
+    get passFailRatio() {
+        let str = `The portfolio has survived ${myResults.pass} times out of ${MASTER_RECORDS.length} scenarios. `;
+        str += "<br>";
+        str += `This gives it pass rate of ${convert2Str(myResults.pass/MASTER_RECORDS.length,true)} based on a survival duration of ${myPortfolio.survivalD} years`;
+        return str;
+    }
     
     // get spanResultMessage() {
     //     return document.querySelector(`#span${this.scenario}-${myPortfolio.currentYear}`)
@@ -394,7 +402,6 @@ function simulator() {
                 updateResults();
             }, 0);
         }
-
     }
 }
 
@@ -405,23 +412,22 @@ function simulator() {
 function updateResults() {
     let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
     for (element of passFailArray) {
-        let id = parseInt(element.id.slice(4,6)); // need to use regEx expression to get the span id and parse it out to just get the sceenario or iteration value
+        let id = parseInt(element.id.slice(4,6)); // TODO: need to use regEx expression to get the span id and parse it out to just get the sceenario or iteration value
+        // let id = parseInt(element.id.replace( /[A-Za-z]+\K[\d]+/g, "")) //doesn't work 
         let lastIndex = MASTER_RECORDS[id].length - 1
-        console.log(` the iteration is ${id}. the last porfolio value is ${MASTER_RECORDS[id][lastIndex].PortfolioEnd}`)
-
-
-
-
-
-
-
-
+        let portfolioEnd = MASTER_RECORDS[id][lastIndex].PortfolioEnd;
+        element.style.display = ""
+        element.style.fontStyle = "italic"
+        if (portfolioEnd > 0) {
+            element.innerHTML = "Pass"
+            element.style.color = "green"
+            myResults.pass++ // to keep track of how many times the portfolio survived
+        } else {
+            element.innerHTML = "Fail!"
+            element.style.color = "red"
+        }
     }
-
-
-
-
-    
+    document.getElementById('caption').innerHTML = myResults.passFailRatio; 
 }
 
 
@@ -431,15 +437,12 @@ function updateResults() {
 function recordResult() {
     
     let scenario = myResults.scenario // the scenario or iteration being run
-
     if (typeof scenario !== "number") alert("Something may go wrong in the program. code ref 4&vv&je@687")
-    
     MASTER_RECORDS.length < scenario + 1 ? MASTER_RECORDS[scenario] = [] : ""; // to first create the empty array space if not done so already
     let currentRow = myPortfolio.currentYear - myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
     MASTER_RECORDS[scenario][currentRow] === undefined ? MASTER_RECORDS[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
 
-18    // CREATE OBJECT HERE to be inserted based on the values below
-    let object = {
+    let object = {  // CREATE OBJECT HERE to be inserted based on the values below
         MktYear : sP500.year,
         Return : sP500.annualReturn,
         PortfolioYr : myPortfolio.currentYear,
@@ -453,27 +456,13 @@ function recordResult() {
     }
 
     MASTER_RECORDS[scenario][currentRow] = {...object}
-
-    // if (this.choose === "sequential") {
-    //     let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year;  // this needs to all be handled at the Class Market level
-    //     this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
-    //     this.resultMessage += `<td scope="col" class="td_small">${convert2Str(sP500.annualReturn,true)}</th>` // Market Gain/Loss
-    // }
-    // this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>` // Year
-    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
-    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.wdAmount, false)}</td>` //Withdrawals
-    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
-    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.return, false)}</td>` // market gains/losses
-    // this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueEnd, false)}</td>` // Portfolio End
-    // this.resultMessage += `<td>${convert2Str(myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
-    // this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
-
 }
 
 
 
 btnSubmit.addEventListener('click', () => { // this event handler takes all the user input fields once clicked, converts to numerical values, and stores them into classes
     console.log(performance.now())
+    MASTER_RECORDS = []; // TODO : create a function to reset values
     setValues(0); // pass argument of 0 as it would be the first initial iteration
     simulator();  // runs the simulation
 })
