@@ -1,8 +1,8 @@
-// TODO : Create a new class called time. This time class is only created in the beginning, and keeps track of all running iterations, results, etc. That way you can see how many years you had a positive win the market, how many years a negative win, and so forth.
 // TODO : Convert the simulator() function from recursive to iterative. I think recursion uses too much memory
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create loading button while waiting for results. Like please wait . . . 
+// TODO : fix the n/a display on the chronological with loop check option when it returns back to the initial year 1926
 // TODO : Loading results caption fix on fixed rate of return option
 // TODO : Debug on chronological sequential option, the last button to expand does not work.
 // TODO : Make sure calculate button does not run if not all inputs are entered
@@ -148,8 +148,9 @@ let MASTER_RECORDS = [ iteration 0
 class Market {
     constructor(historical, rOr, year) {
         this.historical = {...historical}
-        this.rOr = rOr //rOr = rate of return, supplied by user
+        this.rOr = rOr //rOr = fixed rate of rate of return, supplied by user
         this.year = parseInt(year) // the market return year
+        this.loop = document.getElementById('loop').checked // boolean to see if loop option is checked
     }
     
     /**
@@ -185,10 +186,12 @@ class Market {
             case "fixed":
                 return this.rOr;
             case "sequential":
-                return this.year <= LATEST_YEAR ? this.historical[this.year] : this.rOr; //gets the annual return of the sP500 year, but if future year, it returns the default rate specified by user // may need to adjust this with the loop checked option 
-
-
-
+                if (this.year <= LATEST_YEAR) {
+                    return this.historical[this.year] // returns the annual S&P500 of the year this.year
+                } else if (this.loop) { // if the loop option is checked
+                    this.year = INIT_YEAR // reset the year of the market back to the beginning
+                    return this.historical[this.year]
+                } else return this.rOr // if loop not checked, defaults to the fixed rate of return
             default:
                 alert("error code #dddg$15v73 in Class sP500 get annualReturn() method");
                 break;
