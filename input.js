@@ -1,6 +1,7 @@
 // TODO: Stop making input field values reset the cursor every time i edit the number in WD RATE
 // TODO: Feature to add start and stop years
 // TODO: Feature to vary withdrawal in a downmarket year
+// TODO: Finish adding the assumptions feature as user clicks buttons 
 // TODO: The inflation and wdRate need to go to edit mode when user edits, in order to retain the decimal and % after edit is complete. because it will change the value when user edits a digit
 // TODO: Prevent user from inputting multiple decimal periods.
 // TODO: Fix the initial withdrawal rate if a user enters something like 1000.55 and focus out/focus in/focus out
@@ -10,6 +11,7 @@
 const inputField = document.querySelectorAll('input[type="text"]');
 const wd_Rate = document.getElementById('wd_Rate');
 const pct = [document.getElementById('infl'), document.getElementById('rReturn')];
+const optionLoop = document.getElementById('loop');
 
 
 for (field of inputField) { //iterates through all the input fields to add event listener
@@ -135,7 +137,24 @@ function convert2Num(str, decimal, callback) {
     return callback === undefined ? number : callback(number);
 }
 
+optionLoop.addEventListener('change', (e) => {
+    let target = e.target; // TODO: test to make sure it is only applicable when the chronological sequence option is checked. 
+    
+    let li_exists = document.getElementById('loopAssumption');
 
+    if (document.getElementById('sequential').checked) { // this button should only be checked if the Chronological Sequential option is selected
+    
+        let li = document.createElement('li');
+        li.id = "loopAssumption";
+        li.style.fontStyle = "italic";
+
+        if (target.checked) li.textContent = `(Chronological Sequence only) The Market return will reset ("loop") back to the initial year after the latest known year. So for years after ${LATEST_YEAR}, the annual return will mimic market years starting ${INIT_YEAR} and subsequently thereto`;
+        else li.textContent = `(Chronological Sequence only) For years after ${LATEST_YEAR}, the annual return will be the user specified fixed rate of return `
+        
+        if (li_exists !== null) li_exists.textContent = li.textContent // if there is an existing list item just replace the text content
+        else document.querySelector('#assumptions ul').append(li);
+    } else if (li_exists !== null) li_exists.remove();
+}) 
 
 
 
