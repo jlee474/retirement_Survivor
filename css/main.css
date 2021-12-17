@@ -17,10 +17,13 @@ html {
     box-sizing: inherit;
 }
 
+header {
+}
+
 body {
     display: flex;
     flex-direction: column;
-    margin: 8px 8px 8px 18px;
+    margin: 8px 8px 8px 38px;
     min-height: 95vh;
     /* border: 2px solid green; */
 }
@@ -30,7 +33,8 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-auto-rows: minmax(auto, auto);
-    gap: 2px 2px;
+    gap: 4px 4px;
+    max-width: 1200px;
 }
 .inpField {
     border-radius: 5px;
@@ -38,6 +42,7 @@ body {
     background: rgba(114, 0, 0, 0.096);
     display: flex;
     flex-direction: column;
+    max-width: 300px;
 }
 
 
@@ -50,6 +55,7 @@ input {
     text-align: right;
     max-width: 150px;
     background-color: rgba(205, 250, 161, 0.096);
+    margin: 5px;
 }
 
 table {

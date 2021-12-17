@@ -375,42 +375,52 @@ class Results {
         return str;
     }
     
-    // get spanResultMessage() {
-    //     return document.querySelector(`#span${this.scenario}-${myPortfolio.currentYear}`)
-    // }
-
-
 }
 
 /**
  * This recursive function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
  */
 function simulator() {
-    myResults.append();
-    recordResult();
-    myPortfolio.currentYear++;
-    myPortfolio.pValue = myPortfolio.pValueEnd;
-    myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
-    if (myResults.choose === "sequential") sP500.year++;
-    if (myPortfolio.currentYear !== myPortfolio.finalYr) {
-        simulator();
-    } else if (myResults.choose === "sequential") {
-        myResults.appendBlank();
-        myResults.scenario++;
-        setValues(myResults.scenario);
-        if (myResults.scenario + INIT_YEAR < LATEST_YEAR) simulator();
-        else {
+    
+    switch (myResults.choose) {
+
+        case "fixed":
+            oneWholeScenario();
+            break;
+    
+        case "sequential":
+            while (myResults.scenario + INIT_YEAR < LATEST_YEAR) { // TODO: may need to adjust this a bit to see if it fixes the last year expand button in the chronological sequence option
+                oneWholeScenario();
+                myResults.appendBlank();
+                myResults.scenario++;
+                setValues(myResults.scenario);
+            }
             console.log(performance.now())
             setTimeout(() => { //set timeout since the result span text also has it
                 updateResults();
             }, 0);
-        }
+            break;
+
+        default:
+            break;
+    }
+
+}
+
+function oneWholeScenario() {
+    while (myPortfolio.currentYear !== myPortfolio.finalYr) { // TODO: may need to adjust this a bit to see if it fixes the last year expand button in the chronological sequence option
+        myResults.append(); // appends a row of results for display output. 
+        recordResult(); // records the result in the master array
+        //functions to update variables for the following year
+        myPortfolio.currentYear++;
+        myPortfolio.pValue = myPortfolio.pValueEnd;
+        myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
+        if (myResults.choose === "sequential") sP500.year++;
     }
 }
 
-
 /**
- * The purpose of this function is to update the results of all the scenarios
+ * The purpose of this function is to update the Pass Fail results of all the scenarios
  */
 function updateResults() {
     let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
@@ -463,7 +473,7 @@ function recordResult() {
 
 
 
-btnSubmit.addEventListener('click', () => { // this event handler takes all the user input fields once clicked, converts to numerical values, and stores them into classes
+btnSubmit.addEventListener('click', () => { // this event handler commences the setup of the simulation once the button is pressed. 
     console.log(performance.now())
     MASTER_RECORDS = []; // TODO : create a function to reset values
     setValues(0); // pass argument of 0 as it would be the first initial iteration
