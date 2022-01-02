@@ -77,7 +77,7 @@ tr {
 tr:nth-child(even) {
     background: #e8eeef;
 }
-td {
+td, th[scope="row"] {
     border: 1px rgb(170, 208, 233) groove;
     padding: 2px;
     text-align: center;

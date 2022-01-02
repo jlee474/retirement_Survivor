@@ -31,6 +31,21 @@
     
         <main>
             <div id="input_section">
+                
+                <h2>Simulation</h2>
+                <div>
+                    <input type="radio" id="fixed" value="fixed" name="choose" title="This simulation will assume a fixed average rate of return specified by user and ignore market return">
+                    <label for="fixed" title="This simulation will assume a fixed average rate of return specified by user and ignore market return">Fixed Rate of Return</label>
+                </div>
+                <div>
+                    <input type="radio" id="sequential" value="sequential" name="choose" title="This simulation will run based on all the historical years and see how well your portfolio will do. For future years for which there is yet no data, the average annual return rate specified by user will be assumed (unless loop option is checked)">
+                    <label for="sequential" title="This simulation will run based on all the historical years and see how well your portfolio will do. For future years for which there is yet no data, the average annual return rate specified by user will be assumed (unless loop option is checked)">Chronological Sequence</label>
+                </div>
+                <div>
+                    <input type="radio" id="random" value="random_historical" name="choose" title="This simulation will run historical market years in random order. Years will not repeat. Additional data will be needed, including iterations calc option, and years to splice">
+                    <label for="random" title="This simulation will run historical market years in random order. Years will not repeat. Additional data will be needed, including iterations calc option, and years to splice">Random (Historical Rates)</label>
+                </div>
+
                 <div class="inpField">
                     <label for="pValue">Portfolio Value (current value of your portfolio)</label>
                     <input type="text" id="pValue" class="currency" title="Current Starting Value of Your Portfolio" value="">
@@ -67,20 +82,16 @@
                     <input type="checkbox" id="loop" title="Check this box to make the simulation loop the market return back to the beginning after it has reached the end. (Chronological only)">
                 </div>
 
-                
-                <h2>Simulation</h2>
-                <div>
-                    <input type="radio" id="fixed" value="fixed" name="choose" title="This simulation will assume a fixed average rate of return specified by user and ignore market return">
-                    <label for="fixed" title="This simulation will assume a fixed average rate of return specified by user and ignore market return">Fixed Rate of Return</label>
+                <div class="inpField">
+                    <label for="trials" title="(Random only) To figure out how many trials to run. The more trials, the more precise, but also longer calculation time.">Number of tries</label>
+                    <input type="text" id="trials" title="(Random only) To figure out how many trials to run. The more trials, the more precise, but also longer calculation time."/>
                 </div>
-                <div>
-                    <input type="radio" id="sequential" value="sequential" name="choose" title="This simulation will run based on all the historical years and see how well your portfolio will do. For future years for which there is yet no data, the average annual return rate specified by user will be assumed (unless loop option is checked)">
-                    <label for="sequential" title="This simulation will run based on all the historical years and see how well your portfolio will do. For future years for which there is yet no data, the average annual return rate specified by user will be assumed (unless loop option is checked)">Chronological Sequence</label>
+                <div class="inpField">
+                    <label for="reduction" title="How much to reduce withdrawal following a market down year. Does not apply for fixed rate simulation.">Reduction Ratio (optional)</label>
+                    <input type="text" id="reduction" title="How much to reduce withdrawal following a market down year. Does not apply for fixed rate simulation."/>
                 </div>
-                <div>
-                    <input type="radio" id="random" value="random_historical" name="choose" title="This simulation will run historical market years in random order. Years will not repeat. Additional data will be needed, including iterations calc option, and years to splice">
-                    <label for="random" title="This simulation will run historical market years in random order. Years will not repeat. Additional data will be needed, including iterations calc option, and years to splice">Random (Historical Rates)</label>
-                </div>
+
+
             </div>
             
             <input type="submit" id="submit" title="" value="Calculate">

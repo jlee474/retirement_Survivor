@@ -1,16 +1,18 @@
 // TODO: Stop making input field values reset the cursor every time i edit the number in WD RATE
 // TODO: Feature to add start and stop years
 // TODO: Feature to vary withdrawal in a downmarket year
+// TODO: Center align everything
 // TODO: Finish adding the assumptions feature as user clicks buttons 
 // TODO: The inflation and wdRate need to go to edit mode when user edits, in order to retain the decimal and % after edit is complete. because it will change the value when user edits a digit
 // TODO: Prevent user from inputting multiple decimal periods.
 // TODO: Fix the initial withdrawal rate if a user enters something like 1000.55 and focus out/focus in/focus out
+// TODO: Assumptions description from Random--mention that it won't repeat the same market return year, it will only use it once.
 // my regex function that needs work in eliminating trailing zeros /[0^.]+$|/g  sort of works but it also eliminates 0 without decimal, like 3500 -> 35
 
 
 const inputField = document.querySelectorAll('input[type="text"]');
 const wd_Rate = document.getElementById('wd_Rate');
-const pct = [document.getElementById('infl'), document.getElementById('rReturn')];
+const pct = [document.getElementById('infl'), document.getElementById('rReturn'), document.getElementById('reduction')]; // array of input values that should be expressed as a %
 const optionLoop = document.getElementById('loop');
 
 
@@ -85,6 +87,8 @@ function inputValidator(target, callback) {  // this first. it will basically fi
                 target.value = target.value.slice(0, cursorSindex - 1) + target.value.slice(cursorSindex, 4)
             }
             break;
+        case "trials":
+        case "reduction": 
         case "infl":
         case "rReturn":
         case "wd_Rate":
