@@ -1,6 +1,7 @@
 // TODO: Stop making input field values reset the cursor every time i edit the number in WD RATE
 // TODO: Feature to add start and stop years
 // TODO: Feature to vary withdrawal in a downmarket year
+// TODO: Center align everything
 // TODO: Finish adding the assumptions feature as user clicks buttons 
 // TODO: The inflation and wdRate need to go to edit mode when user edits, in order to retain the decimal and % after edit is complete. because it will change the value when user edits a digit
 // TODO: Prevent user from inputting multiple decimal periods.

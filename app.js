@@ -1,3 +1,5 @@
+// TODO : fix terminology. What is iteration? What is simulation? 
+
 // TODO : Convert the simulator() function from recursive to iterative. I think recursion uses too much memory
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
@@ -112,8 +114,10 @@ const HISTORICAL = {
     1926:	0.1162
 };
 
-let sP500 = {};
-let myPortfolio = {};
+let sP500 = null;
+let myPortfolio = null;
+let myResults = null;
+
 const INIT_YEAR = parseInt( Object.keys(HISTORICAL)[0] ); // get the earliest first year in the HISTORICAL Object
 const LATEST_YEAR = parseInt( Object.keys(HISTORICAL)[Object.keys(HISTORICAL).length - 1] ); // get the latest year in the HISTORICAL Object
 const EXPAND = "+"
@@ -194,8 +198,6 @@ class Market {
                 } else return this.rOr // if loop not checked, defaults to the fixed rate of return
             case "random":
                 if (this.randomYearReturnObj.currentYear !== myPortfolio.currentYear) { // check if this function has been executed before for the current year, so this part won't repeat
-                    
-
 
                     this.randomYearReturnObj.currentYear = myPortfolio.currentYear;
                     let keys = Object.keys(this.historical_randomCopy); // an array of keys [i.e. remaining market years] in the historical_randomCopy object
@@ -308,7 +310,7 @@ class Results {
             let spWrapEle = document.createElement('div'); //span wrap element
             let nSpan = document.createElement('span'); //nSpan abbrev. for new span
             nSpan.style.display = "none" // to prevent rendering the display until the position has been set
-            nSpan.id = `span${this.scenario}-${myPortfolio.currentYear}`
+            nSpan.id = `span${this.scenario}-${myPortfolio.currentYear}` // if you change this ID, you will need to change the updatePassFailDisp() function accordingly
             nSpan.innerHTML = "";
             spWrapEle.append(nSpan)
             spWrapEle.classList.add('tempPlaceHolderWrapperClass'); // see CSS styling class
@@ -353,8 +355,7 @@ class Results {
         this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
         this.currentRow.innerHTML = this.resultMessage;
         
-        // if ((this.choose === "sequential" || this.choose === "random") && !this.initial) { // if this is not the first row //TODO: Undo this part after debugging complete.
-        if (this.choose === "sequential" && !this.initial) { // if this is not the first row
+        if ((this.choose === "sequential" || this.choose === "random") && !this.initial) { // if this is NOT the first row 
             document.querySelector('tbody').lastElementChild.classList.add('collapsible')
         }
         this.initial = false; // after this method has run, the next run won't be the initial
@@ -366,7 +367,7 @@ class Results {
         tr.classList.add('blankRow')
         this.tBody.append(tr);
         this.resultMessage = "";
-        if (this.choose === "sequential") {
+        if (this.choose === "sequential" || this.choose === "random") {
             let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year
             let yearRoR = (sP500.year > LATEST_YEAR) ? sP500.rOr : sP500.historical[sP500.year]
             this.resultMessage += `<td scope="col" class="td_small"></th>`
@@ -400,6 +401,8 @@ class Results {
     
 }
 
+
+
 /**
  * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
  */
@@ -413,22 +416,33 @@ function simulator() {
             break;
     
         case "sequential":
-            while (myResults.scenario + INIT_YEAR < LATEST_YEAR) { // TODO: may need to adjust this a bit to see if it fixes the last year expand button in the chronological sequence option
+            while (myResults.scenario + INIT_YEAR < LATEST_YEAR) {
                 oneWholeScenario();
                 myResults.appendBlank();
                 myResults.scenario++;
                 setValues(myResults.scenario);
             }
-            console.log(performance.now())
             setTimeout(() => { //set timeout since the result span text also has it
-                updateResults();
+                updatePassFailDisp();
+                console.log(performance.now()) //record log of end time for benchmark purposes
             }, 0);
             break;
 
         case "random":
-            sP500.annualReturn; // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
-            oneWholeScenario(); // TODO: update to add multiple iterations or tries
-            updateResults();
+            let iterations = convert2Num(document.getElementById('trials').value, false); // declare user-specified num trials or iterations
+            if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
+            while (myResults.scenario < iterations) {
+                sP500.annualReturn; // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
+                oneWholeScenario(); //
+                myResults.appendBlank();
+                myResults.scenario++;
+                setValues(myResults.scenario);
+            }
+            setTimeout( () => { //set timeout since the result span text also has it
+                updatePassFailDisp();
+                console.log(performance.now()) //record log of end time for benchmark purposes
+            }, 0);
+            break;
 
         default:
             break;
@@ -436,6 +450,10 @@ function simulator() {
 
 }
 
+
+/**
+ * This function goes through one whole scenario from beginning year to end year to see how well the portfolio holds
+ */
 function oneWholeScenario() {
     while (myPortfolio.currentYear !== myPortfolio.finalYr) { // TODO: may need to adjust this a bit to see if it fixes the last year expand button in the chronological sequence option
         myResults.append(); // appends a row of results for display output. 
@@ -453,13 +471,15 @@ function oneWholeScenario() {
 /**
  * The purpose of this function is to update the Pass Fail results of all the scenarios
  */
-function updateResults() {
+function updatePassFailDisp() {
     let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
     for (element of passFailArray) {
-        let id = parseInt(element.id.slice(4,6)); // TODO: need to use regEx expression to get the span id and parse it out to just get the sceenario or iteration value
-        // let id = parseInt(element.id.replace( /[A-Za-z]+\K[\d]+/g, "")) //doesn't work 
-        let lastIndex = MASTER_RECORDS[id].length - 1
-        let portfolioEnd = MASTER_RECORDS[id][lastIndex].PortfolioEnd;
+        let iteration = element.id.slice(4); // TODO: (optional) can use regEx expression to get the span id and parse it out to just get the iteration value. implemention code: 5rew631nbqw
+        iteration = iteration.slice(0, iteration.indexOf('-')); 
+        iteration = parseInt(iteration);
+
+        let lastIndex = MASTER_RECORDS[iteration].length - 1
+        let portfolioEnd = MASTER_RECORDS[iteration][lastIndex].PortfolioEnd;
         element.style.display = ""
         element.style.fontStyle = "italic"
         if (portfolioEnd > 0) {
@@ -517,7 +537,10 @@ function recordResult() {
 
 btnSubmit.addEventListener('click', () => { // this event handler commences the setup of the simulation once the button is pressed. 
     console.log(performance.now())
-    MASTER_RECORDS = []; // TODO : create a function to reset values
+    MASTER_RECORDS = []; 
+    let table = document.querySelector('table'); 
+    if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
+    // TODO : ensure all the table data if it exists, is deleted 
     setValues(0); // pass argument of 0 as it would be the first initial iteration
     simulator();  // runs the simulation
 })
@@ -526,7 +549,7 @@ btnSubmit.addEventListener('click', () => { // this event handler commences the 
 
 /**
  * 
- * @param {number} iteration which iteration of the simulation. One iteration goes through an entire scenario. Not relevant if simulation is based on fixed rate of return
+ * @param {number} iteration which iteration of the simulation. One iteration goes through an entire scenario. Not applicable if simulation is based on fixed rate of return
  */
 function setValues(iteration) {
     let wdr = document.getElementById('wd_Rate');
@@ -541,17 +564,14 @@ function setValues(iteration) {
     let startDate = convert2Num(document.getElementById('startDate').value, false);
     let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
     let survivalDuration = convert2Num(document.getElementById('survival').value, false);
-    let numTrials = convert2Num(document.getElementById('trials').value, false);
+    // let numTrials = convert2Num(document.getElementById('trials').value, false);
     let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
 
-
-
-
-
-
-
+    sP500 = null; // the null values resets or "cleans up" any values lingering in the object
     sP500 = new Market(HISTORICAL, rReturn, iteration + INIT_YEAR);
+    myPortfolio = null;
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
+    myResults = null;
     myResults = new Results(option_Selected(), iteration);
 }
 
