@@ -3,8 +3,6 @@
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create loading button while waiting for results. Like please wait . . . 
 // TODO : fix the n/a display on the chronological with loop check option when it returns back to the initial year 1926
-// TODO : Loading results caption fix on fixed rate of return option
-// TODO : Debug on chronological sequential option, the last button to expand does not work.
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Add a rightside note whether portfolio failed
 // TODO : Test the random year function iterating it many times to make sure it is accurate
@@ -148,9 +146,11 @@ let MASTER_RECORDS = [ iteration 0
 class Market {
     constructor(historical, rOr, year) {
         this.historical = {...historical}
+        this.historical_randomCopy = {...historical} // a copy of the object of market returns to be used for the random simulator
         this.rOr = rOr //rOr = fixed rate of rate of return, supplied by user
-        this.year = parseInt(year) // the market return year
+        this.year = parseInt(year) // the market return year, used for sequential
         this.loop = document.getElementById('loop').checked // boolean to see if loop option is checked
+        this.randomYearReturnObj = {currentYear : null, randomMktYear : null, randomMktReturn : null}; // an object to keep track of random simulation
     }
     
     /**
@@ -192,6 +192,19 @@ class Market {
                     this.year = INIT_YEAR // reset the year of the market back to the beginning
                     return this.historical[this.year]
                 } else return this.rOr // if loop not checked, defaults to the fixed rate of return
+            case "random":
+                if (this.randomYearReturnObj.currentYear !== myPortfolio.currentYear) { // check if this function has been executed before for the current year, so this part won't repeat
+                    
+
+
+                    this.randomYearReturnObj.currentYear = myPortfolio.currentYear;
+                    let keys = Object.keys(this.historical_randomCopy); // an array of keys [i.e. remaining market years] in the historical_randomCopy object
+                    let randomMktYear = keys [keys.length * Math.random() << 0] // get a random year in the market (remaining years). the << 0 operator rounds down to the nearest integer. easier than Math.floor
+                    this.randomYearReturnObj.randomMktReturn = this.historical_randomCopy[randomMktYear]; // sets the annual market return for that random year in a permanent accesible object
+                    this.randomYearReturnObj.randomMktYear = randomMktYear; // to record the information in a permanent accesible object
+                    delete this.historical_randomCopy[randomMktYear] // delete the market return year after it has been picked out, so it can't be reused.
+                }
+                return this.randomYearReturnObj.randomMktReturn;
             default:
                 alert("error code #dddg$15v73 in Class sP500 get annualReturn() method");
                 break;
@@ -216,7 +229,7 @@ class Market {
 
 
 class Portfolio {
-    constructor(pValue, infl, startDate, wdRate, survivalD) {
+    constructor(pValue, infl, startDate, wdRate, survivalD, reductionRatio) {
         this.pValue = pValue;
         this.infl = infl;
         this.startYr = startDate;
@@ -224,6 +237,8 @@ class Portfolio {
         this.survivalD = survivalD;
         this.finalYr = this.startYr + this.survivalD;
         this.wdRate = wdRate;
+        this.reductionRatio = isNaN(reductionRatio) ? 0 : reductionRatio; // if reductionRatio is blank or not a number, set it equal to 0
+        this.priorYrReturn === undefined; // undefined for the initial year only, cannot be 0 as 0% is a valid value.
     }
     get pValueMid() {
         return Math.max(this.pValue - this.wdAmount, 0);
@@ -235,11 +250,14 @@ class Portfolio {
         return (this.pValueMid + this.return < 1) ? 0 : this.pValueMid + this.return;
     }
     get wdAmount() {
-        if (this.wdRate <= 1) { // if withdrawal rate is expressed as decimal
-            return this.pValue * this.wdRate;
-        }
-        else return this.wdRate;
+        
+        // to check if prior year return if exists was negative, then reduce the withdrawal rate by the user-specified amount.
+        if (this.priorYrReturn === undefined) return this.wdRate;
+        else if (this.priorYrReturn >= 0) return this.wdRate;
+        else if (this.priorYrReturn < 0) return this.wdRate * (1 - this.reductionRatio);
+        else throw error;
     }
+
     get wdRateHypo() {
         if (this.pValue <= 0) return 0;
         else return this.wdAmount / this.pValue;
@@ -263,7 +281,7 @@ class Results {
         this.resultMessage += `<caption id="caption"> Loading results ... </caption>`
         this.resultMessage += `<thead>`
         this.resultMessage += `<tr>`;
-        if (this.choose === "sequential") {
+        if (this.choose === "sequential" || this.choose === "random") {
             this.resultMessage += `<th scope="col" class="td_small">(S&P500 <br> Year)</th>`
             this.resultMessage += `<th scope="col" class="td_small">(Pct <br>Gains/Loss)</th>`
         }
@@ -284,9 +302,11 @@ class Results {
     }
 
     append(){
-        if (this.initial && this.choose === "sequential") {  // adds the buttons and side result text. to check if its the initial row with data
-            let spWrapEle = document.createElement('div');
-            let nSpan = document.createElement('span');
+        if (this.initial && this.choose !== "fixed") {  // adds the buttons and side result text. to check if its the initial row with data // TODO: scalibility
+            
+            // this block of code adds the text result display that shows on the right side
+            let spWrapEle = document.createElement('div'); //span wrap element
+            let nSpan = document.createElement('span'); //nSpan abbrev. for new span
             nSpan.style.display = "none" // to prevent rendering the display until the position has been set
             nSpan.id = `span${this.scenario}-${myPortfolio.currentYear}`
             nSpan.innerHTML = "";
@@ -298,9 +318,7 @@ class Results {
                 spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
             }, 0 ) // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
 
-            // The section below adds a new expand/collapse side button. The section above adds text result display on side
-
-            //this following section adds a button next to the table to expand/collapse
+            //this following section adds a button next to the table to expand/collapse (left side)
             let btnWrapEle = document.createElement('div');
             let nButton = document.createElement('button');
             nButton.id = `btn${this.scenario}-${myPortfolio.currentYear}`
@@ -316,8 +334,12 @@ class Results {
         tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
         this.tBody.append(tr); //append the new table row to the end of the table body
         this.resultMessage = "";
-        if (this.choose === "sequential") {
-            let year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year;  // this needs to all be handled at the Class Market level
+
+        if (this.choose === "sequential" || this.choose === "random") {
+            let year = null;
+            if (this.choose === "sequential") {
+                year = (sP500.year > LATEST_YEAR) ? "n/a" : sP500.year; // TODO: needs to be a function at the Class Market level to return the value
+            } else if (this.choose === "random") year = sP500.randomYearReturnObj.randomMktYear;
             this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
             this.resultMessage += `<td scope="col" class="td_small">${convert2Str(sP500.annualReturn,true)}</th>` // Market Gain/Loss
         }
@@ -331,7 +353,8 @@ class Results {
         this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
         this.currentRow.innerHTML = this.resultMessage;
         
-        if (this.choose === "sequential" && !this.initial) { // if this is a chronological/sequential display and not the first row 
+        // if ((this.choose === "sequential" || this.choose === "random") && !this.initial) { // if this is not the first row //TODO: Undo this part after debugging complete.
+        if (this.choose === "sequential" && !this.initial) { // if this is not the first row
             document.querySelector('tbody').lastElementChild.classList.add('collapsible')
         }
         this.initial = false; // after this method has run, the next run won't be the initial
@@ -378,7 +401,7 @@ class Results {
 }
 
 /**
- * This recursive function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
+ * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
  */
 function simulator() {
     
@@ -386,6 +409,7 @@ function simulator() {
 
         case "fixed":
             oneWholeScenario();
+            document.getElementById('caption').innerHTML = "";  // to remove the Loading result caption for fixed use cases.
             break;
     
         case "sequential":
@@ -401,6 +425,11 @@ function simulator() {
             }, 0);
             break;
 
+        case "random":
+            sP500.annualReturn; // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
+            oneWholeScenario(); // TODO: update to add multiple iterations or tries
+            updateResults();
+
         default:
             break;
     }
@@ -412,10 +441,12 @@ function oneWholeScenario() {
         myResults.append(); // appends a row of results for display output. 
         recordResult(); // records the result in the master array
         //functions to update variables for the following year
-        myPortfolio.currentYear++;
         myPortfolio.pValue = myPortfolio.pValueEnd;
+        myPortfolio.priorYrReturn = sP500.annualReturn; // to keep track of the prior year return. The ordering is very important here.
+        myPortfolio.currentYear++;
         myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
         if (myResults.choose === "sequential") sP500.year++;
+        else if (myResults.choose === "random") sP500.annualReturn; //to update the Market object .randomYearReturnObj for the new year.
     }
 }
 
@@ -455,9 +486,20 @@ function recordResult() {
     let currentRow = myPortfolio.currentYear - myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
     MASTER_RECORDS[scenario][currentRow] === undefined ? MASTER_RECORDS[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
 
+    let mktYear = "n/a" //fixed results
+    let theReturn = sP500.rOr; //fixed results
+    if (myResults.choose === "sequential") {
+        mktYear = sP500.year;
+        theReturn = sP500.annualReturn;
+    } else if (myResults.choose === "random") {
+        mktYear = sP500.randomYearReturnObj.randomMktYear;
+        theReturn = sP500.randomYearReturnObj.randomMktReturn;
+    }
+
+
     let object = {  // CREATE OBJECT HERE to be inserted based on the values below
-        MktYear : sP500.year,
-        Return : sP500.annualReturn,
+        MktYear : mktYear,
+        Return : theReturn,
         PortfolioYr : myPortfolio.currentYear,
         PortfolioBeg : myPortfolio.pValue,
         Withdrawal : myPortfolio.wdAmount,
@@ -499,8 +541,17 @@ function setValues(iteration) {
     let startDate = convert2Num(document.getElementById('startDate').value, false);
     let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
     let survivalDuration = convert2Num(document.getElementById('survival').value, false);
+    let numTrials = convert2Num(document.getElementById('trials').value, false);
+    let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
+
+
+
+
+
+
+
     sP500 = new Market(HISTORICAL, rReturn, iteration + INIT_YEAR);
-    myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration);
+    myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
     myResults = new Results(option_Selected(), iteration);
 }
 
@@ -547,6 +598,7 @@ function getAllSiblingsofType(target, tagname, callback) {
     while (nElemSibling.tagName.toUpperCase() === tagname) {
         qArray.push(nElemSibling);
         nElemSibling = nElemSibling.nextElementSibling; // move the target down to the next element to check
+        if (nElemSibling === null) break;
     }
     return (callback != undefined) ? callback(qArray) : qArray; // if callback function present, return it with the result as the argument
 }
