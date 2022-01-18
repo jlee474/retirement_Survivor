@@ -1,8 +1,6 @@
 // TODO : fix terminology. What is iteration? What is simulation? 
-
-// TODO : Convert the simulator() function from recursive to iterative. I think recursion uses too much memory
-// TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
+// TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Create loading button while waiting for results. Like please wait . . . 
 // TODO : fix the n/a display on the chronological with loop check option when it returns back to the initial year 1926
 // TODO : Make sure calculate button does not run if not all inputs are entered
