@@ -1,16 +1,15 @@
 // TODO: New Class for each module type. Class will have its own base set of assumptions?
+// TODO: Finish adding the assumptions feature as user clicks buttons 
 // TODO: Feature to add start and stop years
 // TODO: Center align everything
-// TODO: Finish adding the assumptions feature as user clicks buttons 
 // TODO: Prevent user from inputting multiple decimal periods.
-// TODO: Assumptions description from Random--mention that it won't repeat the same market return year, it will only use it once.
 // TODO: delete multiple zeros, i.e. as of this year yyyy --> try entering in 0001
 // TODO: Inflation rate -- try entering in 0.089 and removing focus, and refocus. average annual return, try 0.058 
 
 // my regex function that needs work in eliminating trailing zeros /[0^.]+$|/g  sort of works but it also eliminates 0 without decimal, like 3500 -> 35
 
 
-const optionLoop = document.getElementById('loop');
+
 
 
 
@@ -218,9 +217,17 @@ function convert2Num(str, decimal = false, callback) {
 
 
 
+
+
+
+
+
+
+// const optionLoop = document.getElementById('loop');
+
 /**
  * To add the assumptions. Need to revamp this. 
- */
+ *//*
 optionLoop.addEventListener('change', (e) => {
     let target = e.target; // TODO: test to make sure it is only applicable when the chronological sequence option is checked. 
     
@@ -232,23 +239,13 @@ optionLoop.addEventListener('change', (e) => {
         li.id = "loopAssumption";
         li.style.fontStyle = "italic";
 
-        if (target.checked) li.textContent = `(Chronological Sequence only) The Market return will reset ("loop") back to the initial year after the latest known year. So for years after ${LATEST_YEAR}, the annual return will mimic market years starting ${INIT_YEAR} and subsequently thereto`;
-        else li.textContent = `(Chronological Sequence only) For years after ${LATEST_YEAR}, the annual return will be the user specified fixed rate of return `
+        if (target.checked) li.textContent = `(Chronological Sequence only) The Market return will reset ("loop") back to the initial year after the latest known year. So for years after ${Global.LATEST_YEAR}, the annual return will mimic market years starting ${Global.INIT_YEAR} and subsequently thereto`;
+        else li.textContent = `(Chronological Sequence only) For years after ${Global.LATEST_YEAR}, the annual return will be the user specified fixed rate of return `
         
         if (li_exists !== null) li_exists.textContent = li.textContent // if there is an existing list item just replace the text content
         else document.querySelector('#assumptions ul').append(li);
     } else if (li_exists !== null) li_exists.remove();
 }) 
-
-
-
-
-
-
-
-
-
-
 
 
 
