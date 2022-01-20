@@ -112,11 +112,18 @@ td, th[scope="row"] {
     height: 15px;
 }
 
+h1 {
+    margin: 20px 10px 0px 0px;
+}
+h2 {
+    margin: 5px 0px;
+}
+
 h3 {
     margin: 5px 0px;
 }
 h4 {
-    margin: 0px;
+    margin: 5px 0px;
 }
 ul {
     list-style-type: disclosure-closed;   
