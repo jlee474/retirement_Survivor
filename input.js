@@ -5,7 +5,7 @@
 // TODO: Prevent user from inputting multiple decimal periods.
 // TODO: delete multiple zeros, i.e. as of this year yyyy --> try entering in 0001
 // TODO: Inflation rate -- try entering in 0.089 and removing focus, and refocus. average annual return, try 0.058 
-
+// TODO: Fix assumptions -- loop bug
 // my regex function that needs work in eliminating trailing zeros /[0^.]+$|/g  sort of works but it also eliminates 0 without decimal, like 3500 -> 35
 
 
@@ -127,9 +127,23 @@
 
                 default:
                     break;
+
+
             }
+            // update assumptions here
+            let optionSelected = Global.Options.filter(option => (option.element.checked))
+            optionSelected = optionSelected[0];
+            Global.reset_Add_Assumptions(optionSelected);
         })
     }
+
+    // to add Event listener for loop button click
+    document.getElementById('loop').addEventListener('click', () => {
+        // update assumptions here, violating DRY principle i know i know!
+        let optionSelected = Global.Options.filter(option => (option.element.checked))
+        optionSelected = optionSelected[0];
+        Global.reset_Add_Assumptions(optionSelected);
+    })
 
 })();
 

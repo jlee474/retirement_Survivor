@@ -105,7 +105,68 @@ class globe {
       this.COLLAPSE = "-"
       this.EXPANDALL = "Expand All ..."
       this.COLLAPSEALL = "Collapse All ..."
+      this.FixedRate = {}
+      this.Chronological = {}
+      this.Random = {}
    }
+
+   get Options() {
+      return [this.FixedRate, this.Chronological, this.Random]
+   }
+
+
+   reset_Add_Assumptions(optionSelected) {
+      let assumptions = document.getElementsByClassName('dynamic_assump')
+      // has to be done this way because removing items in the array while looping over the same array creates unintended results
+      while (assumptions.length > 0) {
+         assumptions[0].remove();
+      }
+
+      // populates the appropriate assumptions for the user-selected option
+      for (let assumption of optionSelected.always_Assumptions) {
+         this.appendAssumption(assumption);
+      }
+      
+      // this section appends contingent assumptions
+      let cont_assumptions = Object.keys(optionSelected.contingent_Assumptions) 
+      for (let cont_assumption of cont_assumptions) {
+         let add = false;
+         let value = null;
+         switch (cont_assumption) {
+            case "loop_assump":
+               if (document.getElementById('loop').checked) add = true;
+               break;
+            case "non_loop_assump":
+               if (!document.getElementById('loop').checked) add = true;
+               break;
+            case "reduction_assump":
+               value = document.getElementById('reduction').value;
+               if (value != "") add = true;
+               break;
+            case "iteration_assump":
+               value = document.getElementById('trials').value;
+               if (value > 0) add = true;
+               break;
+            default:
+               break;
+         }
+         if (add) this.appendAssumption(optionSelected.contingent_Assumptions[cont_assumption], value);
+      }
+   }
+
+   appendAssumption(assumption, value = null) {
+      const appendLoc = document.querySelector('#assumptions ul');
+      let li = document.createElement('li');
+      li.classList.add('dynamic_assump');
+      if (value != null) {
+         assumption = assumption.replace("{{ value }}", value)
+      }
+      li.innerHTML = assumption;
+      appendLoc.append(li)
+   }
+   
+   
+
 }
 
 const Global = new globe()

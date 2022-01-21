@@ -1,3 +1,4 @@
+// TODO : default option configures to the default BASED on the option selected
 // TODO : fix terminology. What is iteration? What is simulation? 
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
