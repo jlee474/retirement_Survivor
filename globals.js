@@ -105,6 +105,7 @@ class globe {
       this.COLLAPSE = "-"
       this.EXPANDALL = "Expand All ..."
       this.COLLAPSEALL = "Collapse All ..."
+      this.TRUNCATED = " ... "
       this.FixedRate = {}
       this.Chronological = {}
       this.Random = {}

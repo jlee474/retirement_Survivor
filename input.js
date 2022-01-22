@@ -4,6 +4,7 @@
 // TODO: delete multiple zeros, i.e. as of this year yyyy --> try entering in 0001
 // TODO: Inflation rate -- try entering in 0.089 and removing focus, and refocus. average annual return, try 0.058 
 // TODO: Fix assumptions -- loop bug
+// TODO : move the convert2num and convert2str functions to the global
 // my regex function that needs work in eliminating trailing zeros /[0^.]+$|/g  sort of works but it also eliminates 0 without decimal, like 3500 -> 35
 
 

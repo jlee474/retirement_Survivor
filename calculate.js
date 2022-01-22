@@ -1,38 +1,17 @@
-// TODO : fix terminology. What is iteration? What is simulation? 
-// TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
+// TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Fix loading button while waiting for results. Like please wait . . . 
-// TODO : Make sure calculate button does not run if not all inputs are entered
-// TODO : Add a rightside note whether portfolio failed
+// TODO : Reorder the tablet result for the other options so that it is more readable, i.e. mkt year and mkt return.
+// TODO : THe mid-portfolio value-- do something with it so it stands back.
+// TODO : Scroll down will make the table header sticky to the top
+// TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
 // TODO : Test the random year function iterating it many times to make sure it is accurate
-// TODO : remove portoflio WdAmount checking if decimal since in all cases it should never be a decimal. double check thought.
 // TODO : Add the new button as a separate function
 // TODO : Add feature to export results to spreadsheet
 
 
 
 
-
-let MASTER_RECORDS = [ ]; 
-/* conceptual design of the array holding the master result records. 
-let MASTER_RECORDS = [ iteration 0
-                            [
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                            ],
-                      iteration 1 
-                            [   
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                                {row of results} {second row of results} {third row of results} {...},
-                            ]
-                        ] 
-*/
 
 
 class SP500 {
@@ -81,20 +60,11 @@ class SP500 {
                 if (this.year <= Global.LATEST_YEAR) {
                     return this.historical[this.year] // returns the annual S&P500 of the year this.year
                 } else if (this.loop) { // if the loop option is checked
-                    debugger;
                     alert("Once code has been refactored, this section should never run.  code: eej071") // TODO: probably delete this line of code once everything works.
-                    this.year = Global.INIT_YEAR // reset the year of the market back to the beginning
-                    return this.historical[this.year]
                 } else return this.rOr // if loop not checked, defaults to the fixed rate of return
             case "random":
                 if (this.randomYearReturnObj.currentYear !== Engine.myPortfolio.currentYear) { // check if this function has been executed before for the current year, so this part won't repeat
                     alert("Once code has been refactored, this section should never run. code: 3f7skQ") // TODO: probably delete this line of code once everything works
-                    this.randomYearReturnObj.currentYear = Engine.myPortfolio.currentYear;
-                    let keys = Object.keys(this.historical_randomCopy); // an array of keys [i.e. remaining market years] in the historical_randomCopy object
-                    let randomMktYear = keys [keys.length * Math.random() << 0] // get a random year in the market (remaining years). the << 0 operator rounds down to the nearest integer. easier than Math.floor
-                    this.randomYearReturnObj.randomMktReturn = this.historical_randomCopy[randomMktYear]; // sets the annual market return for that random year in a permanent accesible object
-                    this.randomYearReturnObj.randomMktYear = randomMktYear; // to record the information in a permanent accesible object
-                    delete this.historical_randomCopy[randomMktYear] // delete the market return year after it has been picked out, so it can't be reused.
                 }
                 return this.randomYearReturnObj.randomMktReturn;
             default:
@@ -225,7 +195,7 @@ class Results {
     }
 
     append(){
-        if (this.initial && this.choose !== "fixed") {  // adds the buttons and side result text. to check if its the initial row with data // TODO: scalibility
+        if (this.initial && this.choose !== "fixed") {  // adds the buttons and side result text. to check if its the initial row with data
             
             // this block of code adds the text result display that shows on the right side
             let spWrapEle = document.createElement('div'); //span wrap element
@@ -260,9 +230,8 @@ class Results {
 
         if (this.choose === "sequential" || this.choose === "random") {
             let year = null;
-            if (this.choose === "sequential") {
-                year = (Engine.sP500.year > Global.LATEST_YEAR) ? "n/a" : Engine.sP500.year; // TODO: REFACTOR this section
-            } else if (this.choose === "random") year = Engine.sP500.randomYearReturnObj.randomMktYear;
+            if (this.choose === "sequential")  year = Engine.sP500.year;
+            else if (this.choose === "random")  year = Engine.sP500.randomYearReturnObj.randomMktYear;
             this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
             this.resultMessage += `<td scope="col" class="td_small">${convert2Str(Engine.sP500.annualReturn,true)}</th>` // Market Gain/Loss
         }
@@ -359,9 +328,9 @@ class Results {
         return document.querySelector(`tbody`);
     }
     get passFailRatio() {
-        let str = `The portfolio has survived ${Engine.myResults.pass} times out of ${MASTER_RECORDS.length} scenarios. `;
+        let str = `The portfolio has survived ${Engine.myResults.pass} times out of ${Engine.master_records.length} scenarios. `;
         str += "<br>";
-        str += `This gives it pass rate of ${convert2Str(Engine.myResults.pass/MASTER_RECORDS.length,true)} based on a survival duration of ${Engine.myPortfolio.survivalD} years`;
+        str += `This gives it pass rate of ${convert2Str(Engine.myResults.pass/Engine.master_records.length,true)} based on a survival duration of ${Engine.myPortfolio.survivalD} years`;
         return str;
     }
     
@@ -373,6 +342,7 @@ class MasterEngine {
         this.sP500 = null;
         this.myPortfolio = null;
         this.myResults = null;
+        this.master_records = [];
         this.userInputs = {};
         this.addClick();
     }
@@ -383,29 +353,67 @@ class MasterEngine {
 
     start() {
         console.log(performance.now())
-        MASTER_RECORDS = []; 
+        this.master_records = [];
         let table = document.querySelector('table'); 
         if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
-        this.grabInputs();        
-        this.setValues(0); // pass argument of 0 as it would be the first initial iteration
-        this.simulator();  // runs the simulation
+        this.grabInputs();
+        if (this.inputValidator()) { // make sure inputs are correct
+            this.setValues(0); // pass argument of 0 as it would be the first initial iteration
+            this.simulator();  // runs the simulation
+        }
     }
 
     grabInputs() {
         let wdr = document.getElementById('wd_Rate');
-        if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount // TODO: Maybe remove this part since it will always be $
+        if (wdr.value === "") wdr.value = `$ ${convert2Str(0, false)}`;
+        if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount //
             let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
             let pVal = convert2Num(document.getElementById('pValue').value, false);
             wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
         }
+        let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
         let rReturn = convert2Num(document.getElementById('rReturn').value, true);
+        if (isNaN(rReturn)) {
+            rReturn = 0;
+            document.getElementById('rReturn').value = convert2Str(0, true);
+        }
         let pValue = convert2Num(document.getElementById('pValue').value, false);
         let infl = convert2Num(document.getElementById('infl').value, true);
+        if (isNaN(infl)) {
+            infl = 0;
+            document.getElementById('infl').value = convert2Str(0, true);
+        }
         let startDate = convert2Num(document.getElementById('startDate').value, false);
-        let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
+        if (startDate === "" || isNaN(startDate)) {
+            startDate = new Date().getFullYear();
+            document.getElementById('startDate').value = startDate;
+        }
         let survivalDuration = convert2Num(document.getElementById('survival').value, false);
         let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
         this.userInputs = {rReturn, pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio}
+    }
+
+    inputValidator() {
+        // TODO: add the constraints. for instance, in the random option, should not be able to set a survival duration in excess of 96 years
+        let validated = false;
+        let target = null;
+        if (Global.optionSelected === null) {
+            alert("You must first select an option");
+        } else if (this.userInputs.pValue <= 0 || isNaN(this.userInputs.pValue)) {
+            alert("You must have a starting Portfolio value");
+            target = document.getElementById('pValue');
+        } else if (this.userInputs.survivalDuration <= 0 || isNaN(this.userInputs.survivalDuration)) {
+            alert("You must have a survival duration");
+            target = document.getElementById('survival');
+        } else validated = true;
+
+        if (target !== null) {
+            target.focus();
+            target.selectionStart = 0
+            target.selectionEnd = -1
+        }
+
+        return validated;
     }
 
 
@@ -415,24 +423,11 @@ class MasterEngine {
      * @param {object} inputValue the object holding all the user input values
      */
     setValues(iteration) {
-        // let wdr = document.getElementById('wd_Rate');
-        // if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount // TODO: Maybe remove this part since it will always be $
-        //     let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
-        //     let pVal = convert2Num(document.getElementById('pValue').value, false);
-        //     wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
-        // }
-        // let rReturn = convert2Num(document.getElementById('rReturn').value, true);
-        // let pValue = convert2Num(document.getElementById('pValue').value, false);
-        // let infl = convert2Num(document.getElementById('infl').value, true);
-        // let startDate = convert2Num(document.getElementById('startDate').value, false);
-        // let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
-        // let survivalDuration = convert2Num(document.getElementById('survival').value, false);
-        // let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
-        // the null values resets or "cleans up" any values lingering in the object
+        // the null declaration ensures any previous objects are destroyed or 'cleaned'
         this.sP500 = null; 
         this.myPortfolio = null;
         this.myResults = null;
-        this.sP500 = new SP500(Global.HISTORICAL, this.userInputs.rReturn, this.userInputs.iteration + Global.INIT_YEAR);
+        this.sP500 = new SP500(Global.HISTORICAL, this.userInputs.rReturn, iteration + Global.INIT_YEAR);
         this.myPortfolio = new Portfolio(this.userInputs.pValue, this.userInputs.infl, this.userInputs.startDate, this.userInputs.withdrawalRate, this.userInputs.survivalDuration, this.userInputs.reductionRatio);
         this.myResults = new Results(Global.optionSelected.id, iteration);
     }
@@ -495,7 +490,6 @@ class MasterEngine {
             this.myPortfolio.currentYear++;
             this.myPortfolio.wdRate = this.myPortfolio.wdRate * (1 + this.myPortfolio.infl)
             if (this.myResults.choose === "sequential") this.sP500.year++;
-            //else if (this.myResults.choose === "random") this.sP500.annualReturn; //to update the SP500 object .randomYearReturnObj for the new year.   TODO: Delete this 
         }
     }
 
@@ -509,8 +503,8 @@ class MasterEngine {
             iteration = iteration.slice(0, iteration.indexOf('-')); 
             iteration = parseInt(iteration);
 
-            let lastIndex = MASTER_RECORDS[iteration].length - 1
-            let portfolioEnd = MASTER_RECORDS[iteration][lastIndex].PortfolioEnd;
+            let lastIndex = this.master_records[iteration].length - 1
+            let portfolioEnd = this.master_records[iteration][lastIndex].PortfolioEnd;
             element.style.display = ""
             element.style.fontStyle = "italic"
             if (portfolioEnd > 0) {
@@ -532,9 +526,9 @@ class MasterEngine {
         
         let scenario = this.myResults.scenario // the scenario or iteration being run
         if (typeof scenario !== "number") alert("Something may go wrong in the program. code ref 4&vv&je@687")
-        MASTER_RECORDS.length < scenario + 1 ? MASTER_RECORDS[scenario] = [] : ""; // to first create the empty array space if not done so already
+        this.master_records.length < scenario + 1 ? this.master_records[scenario] = [] : ""; // to first create the empty array space if not done so already
         let currentRow = this.myPortfolio.currentYear - this.myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
-        MASTER_RECORDS[scenario][currentRow] === undefined ? MASTER_RECORDS[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
+        this.master_records[scenario][currentRow] === undefined ? this.master_records[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
 
         let mktYear = "n/a" //fixed results
         let theReturn = this.sP500.rOr; //fixed results
@@ -557,9 +551,35 @@ class MasterEngine {
             HypoWD : this.myPortfolio.wdRateHypo,
             YearsElapsed : currentRow + 1
         }
-        MASTER_RECORDS[scenario][currentRow] = {...object}
+        this.master_records[scenario][currentRow] = {...object}
     }
 
 }
 
 let Engine = new MasterEngine();
+
+
+
+
+
+
+
+/* conceptual design of the array holding the master result records. 
+let MASTER_RECORDS = [ iteration 0
+                            [
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                            ],
+                      iteration 1 
+                            [   
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                                {row of results} {second row of results} {third row of results} {...},
+                            ]
+                        ] 
+*/

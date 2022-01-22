@@ -1,4 +1,4 @@
-// TODO: add the constraints. for instance, in the random option, should not be able to set a survival duration in excess of 96 years
+
 
 /**
  * Options class
@@ -121,57 +121,3 @@ class Option {
       })
    }
 })();
-
-
-/*
-function reset_Add_Assumptions(optionSelected) {
-   let assumptions = document.getElementsByClassName('dynamic_assump')
-      // has to be done this way because removing items in the array while looping over the same array creates unintended results
-   while (assumptions.length > 0) {
-      assumptions[0].remove();
-   }
-
-   // populates the appropriate assumptions for the user-selected option
-   for (assumption of optionSelected.always_Assumptions) {
-      appendAssumption(assumption);
-   }
-
-   // this section appends contingent assumptions
-   cont_assumptions = Object.keys(optionSelected.contingent_Assumptions) 
-   for (cont_assumption of cont_assumptions) {
-      let add = false;
-      let value = null;
-      switch (cont_assumption) {
-         case "loop_assump":
-            if (document.getElementById('loop').checked) add = true;
-            break;
-         case "non_loop_assump":
-            if (!document.getElementById('loop').checked) add = true;
-            break;
-         case "reduction_assump":
-            value = document.getElementById('reduction').value;
-            if (value != "") add = true;
-            break;
-         case "iteration_assump":
-            value = document.getElementById('trials').value;
-            if (value > 0) add = true;
-            break;
-         default:
-            break;
-      }
-      if (add) appendAssumption(optionSelected.contingent_Assumptions[cont_assumption], value);
-   }
-}
-
-
-function appendAssumption(assumption, value = null) {
-   const appendLoc = document.querySelector('#assumptions ul');
-   let li = document.createElement('li');
-   li.classList.add('dynamic_assump');
-   if (value != null) {
-      assumption = assumption.replace("{{ value }}", value)
-   }
-   li.innerHTML = assumption;
-   appendLoc.append(li)
-}
-*/
