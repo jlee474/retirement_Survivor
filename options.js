@@ -36,7 +36,7 @@ class Option {
 
    // list of all assumptions to display
    const sP_assump = `Portfolio is 100% invested in S&P500 market index fund`
-   const loop_assump = `For years after ${Global.LATEST_YEAR}, the Market return will reset ("loop") back to the initial year after the latest known year. So for years after ${Global.LATEST_YEAR}, the annual return will mimic market years starting ${Global.INIT_YEAR} and subsequently thereto`
+   const loop_assump = `The Market return will reset ("loop") back to the initial year after the latest known year. So for years after ${Global.LATEST_YEAR}, the annual return will mimic market years starting ${Global.INIT_YEAR} and subsequently thereto`
    const chronological_assump = `The market return will follow the historical year performance in chronological order, with a unique scenario starting at each year from ${Global.INIT_YEAR} to ${Global.LATEST_YEAR}`
    const noSP_assump = `Portfolio will return user-specified fixed % rate of return annually`
    const non_loop_assump = `For years after ${Global.LATEST_YEAR}, the annual return will be the user specified fixed annual return`
@@ -107,13 +107,9 @@ class Option {
 
    // this section will add the event listener, display input fields, and append assumptions to the HTML
    for (option of Global.Options) {
-      option.element.addEventListener('click', (evt) => {
+      option.element.addEventListener('change', (evt) => {
 
-         // this filter finds the option.id that matches the evt.target.id (user clicked) and returns the array of filtered [option elements] and stores into optionSelected variable. 
-            // https://flexiple.com/javascript-filter-array/#:~:text=The%20JavaScript%20filter%20array%20function%20is%20used%20to%20filter%20an,returns%20the%20values%20that%20pass.
-         let optionSelected = Global.Options.filter( option => (option.id === evt.target.id) )
-         // since the filter returns an array, remove the array, since it should always return 1 result
-         optionSelected = optionSelected[0];
+         let optionSelected = Global.optionSelected;
          Global.reset_Add_Assumptions(optionSelected);
 
          // toggles the applicable input fields based on the user-selected option

@@ -1,5 +1,3 @@
-// TODO: New Class for each module type. Class will have its own base set of assumptions?
-// TODO: Finish adding the assumptions feature as user clicks buttons 
 // TODO: Feature to add start and stop years
 // TODO: Center align everything
 // TODO: Prevent user from inputting multiple decimal periods.
@@ -97,7 +95,6 @@
                         target.value = Number(target.value).toLocaleString();
                         target.value = `$ ${target.value}`
                     } else {
-                        alert(`Error! code ref: 3dwqgUJ52634, target.value = ${target.vale}`);
                         target.value = ""
                     }
                     break;
@@ -131,18 +128,13 @@
 
             }
             // update assumptions here
-            let optionSelected = Global.Options.filter(option => (option.element.checked))
-            optionSelected = optionSelected[0];
-            Global.reset_Add_Assumptions(optionSelected);
+            Global.reset_Add_Assumptions(Global.optionSelected);
         })
     }
 
     // to add Event listener for loop button click
-    document.getElementById('loop').addEventListener('click', () => {
-        // update assumptions here, violating DRY principle i know i know!
-        let optionSelected = Global.Options.filter(option => (option.element.checked))
-        optionSelected = optionSelected[0];
-        Global.reset_Add_Assumptions(optionSelected);
+    document.getElementById('loop').addEventListener('change', () => {
+        Global.reset_Add_Assumptions(Global.optionSelected);
     })
 
 })();

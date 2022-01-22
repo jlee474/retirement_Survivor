@@ -2,7 +2,7 @@
 // TODO : fix terminology. What is iteration? What is simulation? 
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
-// TODO : Create loading button while waiting for results. Like please wait . . . 
+// TODO : Fix loading button while waiting for results. Like please wait . . . 
 // TODO : fix the n/a display on the chronological with loop check option when it returns back to the initial year 1926
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Add a rightside note whether portfolio failed
@@ -298,6 +298,54 @@ class Results {
 }
 
 
+class Engine {
+    constructor() {
+        this.addClick();
+    }
+    
+    
+    addClick() {
+        document.querySelector('#submit').addEventListener('click', this.start());
+    }
+
+    start() {
+        console.log("Hello world!")
+    }
+
+}
+
+let Start = new Engine();
+
+
+
+
+
+
+
+btnSubmit.addEventListener('click', () => { // this event handler commences the setup of the simulation once the button is pressed. 
+    console.log(performance.now())
+    MASTER_RECORDS = []; 
+    let table = document.querySelector('table'); 
+    if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
+    // TODO : ensure all the table data if it exists, is deleted 
+    setValues(0); // pass argument of 0 as it would be the first initial iteration
+    simulator();  // runs the simulation
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
@@ -431,15 +479,6 @@ function recordResult() {
 
 
 
-btnSubmit.addEventListener('click', () => { // this event handler commences the setup of the simulation once the button is pressed. 
-    console.log(performance.now())
-    MASTER_RECORDS = []; 
-    let table = document.querySelector('table'); 
-    if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
-    // TODO : ensure all the table data if it exists, is deleted 
-    setValues(0); // pass argument of 0 as it would be the first initial iteration
-    simulator();  // runs the simulation
-})
 
 
 
@@ -468,7 +507,7 @@ function setValues(iteration) {
     myPortfolio = null;
     myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
     myResults = null;
-    myResults = new Results(option_Selected(), iteration);
+    myResults = new Results(Global.optionSelected.id, iteration);
 }
 
 
@@ -519,16 +558,6 @@ function getAllSiblingsofType(target, tagname, callback) {
     return (callback != undefined) ? callback(qArray) : qArray; // if callback function present, return it with the result as the argument
 }
 
-/**
- * 
- * @returns the option user selected, as defined by the radio button
- */
-function option_Selected() {
-    let radioInputs = document.querySelectorAll('input[type="radio"]');
-    for (input of radioInputs) {
-        if (input.checked) return input.id;
-    }
-};
 
 
 

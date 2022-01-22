@@ -114,6 +114,20 @@ class globe {
       return [this.FixedRate, this.Chronological, this.Random]
    }
 
+   get optionSelected() {
+
+      // this filter finds the option.id that matches the evt.target.id (user clicked) and returns the array of filtered [option elements] and stores into optionSelected variable. 
+         // https://flexiple.com/javascript-filter-array/#:~:text=The%20JavaScript%20filter%20array%20function%20is%20used%20to%20filter%20an,returns%20the%20values%20that%20pass.
+      let optionSelected = this.Options.filter( option => option.element.checked);
+      if (optionSelected.length > 1) {
+         alert("error code: 35Vqw7 -- more than one option has been selected. This is not possible.");
+      } else if (optionSelected.length === 1) {
+         // since the filter returns an array, remove the array
+         return optionSelected[0];
+      } 
+      return null;
+   }
+
 
    reset_Add_Assumptions(optionSelected) {
       let assumptions = document.getElementsByClassName('dynamic_assump')
@@ -164,10 +178,9 @@ class globe {
       li.innerHTML = assumption;
       appendLoc.append(li)
    }
-   
-   
 
 }
 
 const Global = new globe()
+
 
