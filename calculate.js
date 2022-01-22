@@ -2,7 +2,6 @@
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Fix loading button while waiting for results. Like please wait . . . 
-// TODO : fix the n/a display on the chronological with loop check option when it returns back to the initial year 1926
 // TODO : Make sure calculate button does not run if not all inputs are entered
 // TODO : Add a rightside note whether portfolio failed
 // TODO : Test the random year function iterating it many times to make sure it is accurate
@@ -82,6 +81,7 @@ class SP500 {
                 if (this.year <= Global.LATEST_YEAR) {
                     return this.historical[this.year] // returns the annual S&P500 of the year this.year
                 } else if (this.loop) { // if the loop option is checked
+                    debugger;
                     alert("Once code has been refactored, this section should never run.  code: eej071") // TODO: probably delete this line of code once everything works.
                     this.year = Global.INIT_YEAR // reset the year of the market back to the beginning
                     return this.historical[this.year]
@@ -373,6 +373,7 @@ class MasterEngine {
         this.sP500 = null;
         this.myPortfolio = null;
         this.myResults = null;
+        this.userInputs = {};
         this.addClick();
     }
     
@@ -385,18 +386,14 @@ class MasterEngine {
         MASTER_RECORDS = []; 
         let table = document.querySelector('table'); 
         if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
-        // TODO : ensure all the table data if it exists, is deleted 
+        this.grabInputs();        
         this.setValues(0); // pass argument of 0 as it would be the first initial iteration
         this.simulator();  // runs the simulation
     }
 
-    /**
-     * 
-     * @param {number} iteration which iteration of the simulation. One iteration goes through an entire scenario. Not applicable if simulation is based on fixed rate of return
-     */
-    setValues(iteration) {
+    grabInputs() {
         let wdr = document.getElementById('wd_Rate');
-        if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
+        if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount // TODO: Maybe remove this part since it will always be $
             let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
             let pVal = convert2Num(document.getElementById('pValue').value, false);
             wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
@@ -407,19 +404,41 @@ class MasterEngine {
         let startDate = convert2Num(document.getElementById('startDate').value, false);
         let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
         let survivalDuration = convert2Num(document.getElementById('survival').value, false);
-        // let numTrials = convert2Num(document.getElementById('trials').value, false);
         let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
+        this.userInputs = {rReturn, pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio}
+    }
 
-        this.sP500 = null; // the null values resets or "cleans up" any values lingering in the object
-        this.sP500 = new SP500(Global.HISTORICAL, rReturn, iteration + Global.INIT_YEAR);
+
+    /**
+     * 
+     * @param {number} iteration which iteration of the simulation. One iteration goes through an entire scenario. Not applicable if simulation is based on fixed rate of return
+     * @param {object} inputValue the object holding all the user input values
+     */
+    setValues(iteration) {
+        // let wdr = document.getElementById('wd_Rate');
+        // if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount // TODO: Maybe remove this part since it will always be $
+        //     let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
+        //     let pVal = convert2Num(document.getElementById('pValue').value, false);
+        //     wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
+        // }
+        // let rReturn = convert2Num(document.getElementById('rReturn').value, true);
+        // let pValue = convert2Num(document.getElementById('pValue').value, false);
+        // let infl = convert2Num(document.getElementById('infl').value, true);
+        // let startDate = convert2Num(document.getElementById('startDate').value, false);
+        // let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
+        // let survivalDuration = convert2Num(document.getElementById('survival').value, false);
+        // let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
+        // the null values resets or "cleans up" any values lingering in the object
+        this.sP500 = null; 
         this.myPortfolio = null;
-        this.myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
         this.myResults = null;
+        this.sP500 = new SP500(Global.HISTORICAL, this.userInputs.rReturn, this.userInputs.iteration + Global.INIT_YEAR);
+        this.myPortfolio = new Portfolio(this.userInputs.pValue, this.userInputs.infl, this.userInputs.startDate, this.userInputs.withdrawalRate, this.userInputs.survivalDuration, this.userInputs.reductionRatio);
         this.myResults = new Results(Global.optionSelected.id, iteration);
     }
 
     /**
-     * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
+     * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year duration has been reached. 
      */
     simulator() {
         switch (this.myResults.choose) {
@@ -430,7 +449,7 @@ class MasterEngine {
                 break;
         
             case "sequential":
-                while (this.myResults.scenario + Global.INIT_YEAR < Global.LATEST_YEAR) { //TODO: switching the operator from < to <= may resolve the year 2021 not coming out.
+                while (this.myResults.scenario + Global.INIT_YEAR <= Global.LATEST_YEAR) {
                     this.oneWholeScenario();
                     this.myResults.appendBlank();
                     this.myResults.scenario++;
@@ -443,7 +462,7 @@ class MasterEngine {
                 break;
 
             case "random":
-                let iterations = convert2Num(document.getElementById('trials').value, false); // declare user-specified num trials or iterations
+                let iterations = convert2Num(document.getElementById('trials').value, false); // declare user-specified number iterations
                 if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
                 while (this.myResults.scenario < iterations) {
                     this.oneWholeScenario(); 
