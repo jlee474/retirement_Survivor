@@ -13,8 +13,6 @@
 
 
 
-const btnSubmit = document.getElementById('submit');
-
 
 let sP500 = null;
 let myPortfolio = null;
@@ -225,7 +223,7 @@ class Results {
             btnWrapEle.classList.add('collapseDivBtn'); // see CSS styling class
             nButton.classList.add('collapseBtn') // see CSS styling class
             this.tBody.insertAdjacentElement('beforeend', btnWrapEle);
-            expand(nButton); // function to add the event handler and functionality
+            this.expand(nButton); // function to add the event handler and functionality
         }
 
         let tr = document.createElement('tr'); //creating new table row
@@ -282,6 +280,53 @@ class Results {
         this.initial = true;
     }
 
+    /**
+     * 
+     * @param {element} element the element for which the event handler will be added
+     * @param {*} callback an optional callback function
+     * @returns undefined. This function simply sets the event handler to the element.
+     */
+     expand(element, callback) {
+        element.addEventListener('click', (e) => {
+            if (e.target.textContent === Global.EXPAND) {
+                e.target.textContent = Global.COLLAPSE;
+                this.getAllSiblingsofType(e.target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
+                    for (let ele of arr) {
+                        ele.style.display = "table-row";
+                    }
+                }); 
+            } else if (e.target.textContent === Global.COLLAPSE) {
+                e.target.textContent = Global.EXPAND;
+                this.getAllSiblingsofType(e.target.parentNode, 'tr', arr => {
+                    for (let ele of arr) {
+                        ele.style.display = "";
+                    }
+                });
+            }
+        })
+        callback; //optional callback
+    }
+
+    /**
+     * 
+     * @param {element} target the element starting reference for which the sibling elements will be based
+     * @param {string} tagname the tagname in string format (e.g. 'div') of the siblings to include in the query
+     * @param {*} callback an optional callback function, with the result as the argument 
+     * @returns an array of the SUBSEQUENT CONSECUTIVE sibling elements that match the tagname query 
+     */
+    getAllSiblingsofType(target, tagname, callback) {
+        let qArray = []; // the array of query results
+        tagname = tagname.toUpperCase();
+        let nElemSibling = target.nextElementSibling;
+        while (nElemSibling.tagName.toUpperCase() === tagname) {
+            qArray.push(nElemSibling);
+            nElemSibling = nElemSibling.nextElementSibling; // move the target down to the next element to check
+            if (nElemSibling === null) break;
+        }
+        return (callback != undefined) ? callback(qArray) : qArray; // if callback function present, return it with the result as the argument
+    }
+
+
     get currentRow() {
         return document.getElementById(`${this.scenario}-${myPortfolio.currentYear}`)
     }
@@ -298,400 +343,176 @@ class Results {
 }
 
 
-class Engine {
+class MasterEngine {
     constructor() {
         this.addClick();
     }
     
-    
     addClick() {
-        document.querySelector('#submit').addEventListener('click', this.start());
+        document.querySelector('#submit').addEventListener('click', () => this.start());
     }
 
     start() {
-        console.log("Hello world!")
+        console.log(performance.now())
+        MASTER_RECORDS = []; 
+        let table = document.querySelector('table'); 
+        if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
+        // TODO : ensure all the table data if it exists, is deleted 
+        this.setValues(0); // pass argument of 0 as it would be the first initial iteration
+        this.simulator();  // runs the simulation
     }
 
-}
+    /**
+     * 
+     * @param {number} iteration which iteration of the simulation. One iteration goes through an entire scenario. Not applicable if simulation is based on fixed rate of return
+     */
+    setValues(iteration) {
+        let wdr = document.getElementById('wd_Rate');
+        if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
+            let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
+            let pVal = convert2Num(document.getElementById('pValue').value, false);
+            wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
+        }
+        let rReturn = convert2Num(document.getElementById('rReturn').value, true);
+        let pValue = convert2Num(document.getElementById('pValue').value, false);
+        let infl = convert2Num(document.getElementById('infl').value, true);
+        let startDate = convert2Num(document.getElementById('startDate').value, false);
+        let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
+        let survivalDuration = convert2Num(document.getElementById('survival').value, false);
+        // let numTrials = convert2Num(document.getElementById('trials').value, false);
+        let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
 
-let Start = new Engine();
-
-
-
-
-
-
-
-btnSubmit.addEventListener('click', () => { // this event handler commences the setup of the simulation once the button is pressed. 
-    console.log(performance.now())
-    MASTER_RECORDS = []; 
-    let table = document.querySelector('table'); 
-    if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
-    // TODO : ensure all the table data if it exists, is deleted 
-    setValues(0); // pass argument of 0 as it would be the first initial iteration
-    simulator();  // runs the simulation
-})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
- */
-function simulator() {
-    
-    switch (myResults.choose) {
-
-        case "fixed":
-            oneWholeScenario();
-            document.getElementById('caption').innerHTML = "";  // to remove the Loading result caption for fixed use cases.
-            break;
-    
-        case "sequential":
-            while (myResults.scenario + Global.INIT_YEAR < Global.LATEST_YEAR) {
-                oneWholeScenario();
-                myResults.appendBlank();
-                myResults.scenario++;
-                setValues(myResults.scenario);
-            }
-            setTimeout(() => { //set timeout since the result span text also has it
-                updatePassFailDisp();
-                console.log(performance.now()) //record log of end time for benchmark purposes
-            }, 0);
-            break;
-
-        case "random":
-            let iterations = convert2Num(document.getElementById('trials').value, false); // declare user-specified num trials or iterations
-            if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
-            while (myResults.scenario < iterations) {
-                sP500.annualReturn; // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
-                oneWholeScenario(); //
-                myResults.appendBlank();
-                myResults.scenario++;
-                setValues(myResults.scenario);
-            }
-            setTimeout( () => { //set timeout since the result span text also has it
-                updatePassFailDisp();
-                console.log(performance.now()) //record log of end time for benchmark purposes
-            }, 0);
-            break;
-
-        default:
-            break;
+        sP500 = null; // the null values resets or "cleans up" any values lingering in the object
+        sP500 = new Market(Global.HISTORICAL, rReturn, iteration + Global.INIT_YEAR);
+        myPortfolio = null;
+        myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
+        myResults = null;
+        myResults = new Results(Global.optionSelected.id, iteration);
     }
 
-}
+    /**
+     * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
+     */
+    simulator() {
+        switch (myResults.choose) {
 
+            case "fixed":
+                this.oneWholeScenario();
+                document.getElementById('caption').innerHTML = "";  // to remove the Loading result caption for fixed use cases.
+                break;
+        
+            case "sequential":
+                while (myResults.scenario + Global.INIT_YEAR < Global.LATEST_YEAR) {
+                    this.oneWholeScenario();
+                    myResults.appendBlank();
+                    myResults.scenario++;
+                    Engine.setValues(myResults.scenario);
+                }
+                setTimeout(() => { //set timeout since the result span text also has it
+                    this.updatePassFailDisp();
+                    console.log(performance.now()) //record log of end time for benchmark purposes
+                }, 0);
+                break;
 
-/**
- * This function goes through one whole scenario from beginning year to end year to see how well the portfolio holds
- */
-function oneWholeScenario() {
-    while (myPortfolio.currentYear !== myPortfolio.finalYr) { // TODO: may need to adjust this a bit to see if it fixes the last year expand button in the chronological sequence option
-        myResults.append(); // appends a row of results for display output. 
-        recordResult(); // records the result in the master array
-        //functions to update variables for the following year
-        myPortfolio.pValue = myPortfolio.pValueEnd;
-        myPortfolio.priorYrReturn = sP500.annualReturn; // to keep track of the prior year return. The ordering is very important here.
-        myPortfolio.currentYear++;
-        myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
-        if (myResults.choose === "sequential") sP500.year++;
-        else if (myResults.choose === "random") sP500.annualReturn; //to update the Market object .randomYearReturnObj for the new year.
-    }
-}
+            case "random":
+                let iterations = convert2Num(document.getElementById('trials').value, false); // declare user-specified num trials or iterations
+                if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
+                while (myResults.scenario < iterations) {
+                    sP500.annualReturn; // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
+                    this.oneWholeScenario(); 
+                    myResults.appendBlank();
+                    myResults.scenario++;
+                    Engine.setValues(myResults.scenario);
+                }
+                setTimeout( () => { //set timeout since the result span text also has it
+                    this.updatePassFailDisp();
+                    console.log(performance.now()) //record log of end time for benchmark purposes
+                }, 0);
+                break;
 
-/**
- * The purpose of this function is to update the Pass Fail results of all the scenarios
- */
-function updatePassFailDisp() {
-    let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
-    for (element of passFailArray) {
-        let iteration = element.id.slice(4); // TODO: (optional) can use regEx expression to get the span id and parse it out to just get the iteration value. implemention code: 5rew631nbqw
-        iteration = iteration.slice(0, iteration.indexOf('-')); 
-        iteration = parseInt(iteration);
-
-        let lastIndex = MASTER_RECORDS[iteration].length - 1
-        let portfolioEnd = MASTER_RECORDS[iteration][lastIndex].PortfolioEnd;
-        element.style.display = ""
-        element.style.fontStyle = "italic"
-        if (portfolioEnd > 0) {
-            element.innerHTML = "Pass"
-            element.style.color = "green"
-            myResults.pass++ // to keep track of how many times the portfolio survived
-        } else {
-            element.innerHTML = "Fail!"
-            element.style.color = "red"
+            default:
+                break;
         }
     }
-    document.getElementById('caption').innerHTML = myResults.passFailRatio; 
-}
 
-
-/**
- * @returns : Updates the master result array 
- */
-function recordResult() {
-    
-    let scenario = myResults.scenario // the scenario or iteration being run
-    if (typeof scenario !== "number") alert("Something may go wrong in the program. code ref 4&vv&je@687")
-    MASTER_RECORDS.length < scenario + 1 ? MASTER_RECORDS[scenario] = [] : ""; // to first create the empty array space if not done so already
-    let currentRow = myPortfolio.currentYear - myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
-    MASTER_RECORDS[scenario][currentRow] === undefined ? MASTER_RECORDS[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
-
-    let mktYear = "n/a" //fixed results
-    let theReturn = sP500.rOr; //fixed results
-    if (myResults.choose === "sequential") {
-        mktYear = sP500.year;
-        theReturn = sP500.annualReturn;
-    } else if (myResults.choose === "random") {
-        mktYear = sP500.randomYearReturnObj.randomMktYear;
-        theReturn = sP500.randomYearReturnObj.randomMktReturn;
-    }
-
-
-    let object = {  // CREATE OBJECT HERE to be inserted based on the values below
-        MktYear : mktYear,
-        Return : theReturn,
-        PortfolioYr : myPortfolio.currentYear,
-        PortfolioBeg : myPortfolio.pValue,
-        Withdrawal : myPortfolio.wdAmount,
-        PortfolioMid : myPortfolio.pValue,
-        MktGainsLoss : myPortfolio.return,
-        PortfolioEnd : myPortfolio.pValueEnd,
-        HypoWD : myPortfolio.wdRateHypo,
-        YearsElapsed : currentRow + 1
-    }
-
-    MASTER_RECORDS[scenario][currentRow] = {...object}
-}
-
-
-
-
-
-
-/**
- * 
- * @param {number} iteration which iteration of the simulation. One iteration goes through an entire scenario. Not applicable if simulation is based on fixed rate of return
- */
-function setValues(iteration) {
-    let wdr = document.getElementById('wd_Rate');
-    if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount
-        let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
-        let pVal = convert2Num(document.getElementById('pValue').value, false);
-        wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
-    }
-    let rReturn = convert2Num(document.getElementById('rReturn').value, true);
-    let pValue = convert2Num(document.getElementById('pValue').value, false);
-    let infl = convert2Num(document.getElementById('infl').value, true);
-    let startDate = convert2Num(document.getElementById('startDate').value, false);
-    let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
-    let survivalDuration = convert2Num(document.getElementById('survival').value, false);
-    // let numTrials = convert2Num(document.getElementById('trials').value, false);
-    let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
-
-    sP500 = null; // the null values resets or "cleans up" any values lingering in the object
-    sP500 = new Market(Global.HISTORICAL, rReturn, iteration + Global.INIT_YEAR);
-    myPortfolio = null;
-    myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
-    myResults = null;
-    myResults = new Results(Global.optionSelected.id, iteration);
-}
-
-
-/**
- * 
- * @param {element} element the element for which the event handler will be added
- * @param {*} callback an optional callback function
- * @returns undefined. This function simply sets the event handler to the element.
- */
-function expand(element, callback) {
-    element.addEventListener('click', (e) => {
-        if (e.target.textContent === Global.EXPAND) {
-            e.target.textContent = Global.COLLAPSE;
-            getAllSiblingsofType(e.target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
-                for (ele of arr) {
-                    ele.style.display = "table-row";
-                }
-            }); 
-        } else if (e.target.textContent === Global.COLLAPSE) {
-            e.target.textContent = Global.EXPAND;
-            getAllSiblingsofType(e.target.parentNode, 'tr', arr => {
-                for (ele of arr) {
-                    ele.style.display = "";
-                }
-            });
+    /**
+     * This function goes through one whole scenario from beginning year to end year to see how well the portfolio holds
+     */
+    oneWholeScenario() {
+        while (myPortfolio.currentYear !== myPortfolio.finalYr) { // TODO: may need to adjust this a bit to see if it fixes the last year expand button in the chronological sequence option
+            myResults.append(); // appends a row of results for display output. 
+            this.recordResult(); // records the result in the master array
+            //functions to update variables for the following year
+            myPortfolio.pValue = myPortfolio.pValueEnd;
+            myPortfolio.priorYrReturn = sP500.annualReturn; // to keep track of the prior year return. The ordering is very important here.
+            myPortfolio.currentYear++;
+            myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
+            if (myResults.choose === "sequential") sP500.year++;
+            else if (myResults.choose === "random") sP500.annualReturn; //to update the Market object .randomYearReturnObj for the new year.
         }
-    })
-    callback; //optional callback
-}
-
-
-/**
- * 
- * @param {element} target the element starting reference for which the sibling elements will be based
- * @param {string} tagname the tagname in string format (e.g. 'div') of the siblings to include in the query
- * @param {*} callback an optional callback function, with the result as the argument 
- * @returns an array of the SUBSEQUENT CONSECUTIVE sibling elements that match the tagname query 
- */
-function getAllSiblingsofType(target, tagname, callback) {
-    let qArray = []; // the array of query results
-    tagname = tagname.toUpperCase();
-    let nElemSibling = target.nextElementSibling;
-    while (nElemSibling.tagName.toUpperCase() === tagname) {
-        qArray.push(nElemSibling);
-        nElemSibling = nElemSibling.nextElementSibling; // move the target down to the next element to check
-        if (nElemSibling === null) break;
     }
-    return (callback != undefined) ? callback(qArray) : qArray; // if callback function present, return it with the result as the argument
+
+    /**
+     * The purpose of this function is to update the Pass Fail results of all the scenarios
+     */
+    updatePassFailDisp() {
+        let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
+        for (let element of passFailArray) {
+            let iteration = element.id.slice(4); // TODO: (optional) can use regEx expression to get the span id and parse it out to just get the iteration value. implemention code: 5rew631nbqw
+            iteration = iteration.slice(0, iteration.indexOf('-')); 
+            iteration = parseInt(iteration);
+
+            let lastIndex = MASTER_RECORDS[iteration].length - 1
+            let portfolioEnd = MASTER_RECORDS[iteration][lastIndex].PortfolioEnd;
+            element.style.display = ""
+            element.style.fontStyle = "italic"
+            if (portfolioEnd > 0) {
+                element.innerHTML = "Pass"
+                element.style.color = "green"
+                myResults.pass++ // to keep track of how many times the portfolio survived
+            } else {
+                element.innerHTML = "Fail!"
+                element.style.color = "red"
+            }
+        }
+        document.getElementById('caption').innerHTML = myResults.passFailRatio; 
+    }
+
+    /**
+     * @returns : Updates the master result array 
+     */
+    recordResult() {
+        
+        let scenario = myResults.scenario // the scenario or iteration being run
+        if (typeof scenario !== "number") alert("Something may go wrong in the program. code ref 4&vv&je@687")
+        MASTER_RECORDS.length < scenario + 1 ? MASTER_RECORDS[scenario] = [] : ""; // to first create the empty array space if not done so already
+        let currentRow = myPortfolio.currentYear - myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
+        MASTER_RECORDS[scenario][currentRow] === undefined ? MASTER_RECORDS[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
+
+        let mktYear = "n/a" //fixed results
+        let theReturn = sP500.rOr; //fixed results
+        if (myResults.choose === "sequential") {
+            mktYear = sP500.year;
+            theReturn = sP500.annualReturn;
+        } else if (myResults.choose === "random") {
+            mktYear = sP500.randomYearReturnObj.randomMktYear;
+            theReturn = sP500.randomYearReturnObj.randomMktReturn;
+        }
+        let object = {  // CREATE OBJECT HERE to be inserted based on the values below
+            MktYear : mktYear,
+            Return : theReturn,
+            PortfolioYr : myPortfolio.currentYear,
+            PortfolioBeg : myPortfolio.pValue,
+            Withdrawal : myPortfolio.wdAmount,
+            PortfolioMid : myPortfolio.pValue,
+            MktGainsLoss : myPortfolio.return,
+            PortfolioEnd : myPortfolio.pValueEnd,
+            HypoWD : myPortfolio.wdRateHypo,
+            YearsElapsed : currentRow + 1
+        }
+        MASTER_RECORDS[scenario][currentRow] = {...object}
+    }
+
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const HISTORICAL = {
-//     2021:	0.2646,
-//     2020:	0.184,
-//     2019:	0.3149,
-//     2018:	-0.0438,
-//     2017:	0.2183,
-//     2016:	0.1196,
-//     2015:	0.0138,
-//     2014:	0.1369,
-//     2013:	0.3239,
-//     2012:	0.16,
-//     2011:	0.0211,
-//     2010:	0.1506,
-//     2009:	0.2646,
-//     2008:	-0.37,
-//     2007:	0.0549,
-//     2006:	0.1579,
-//     2005:	0.0491,
-//     2004:	0.1088,
-//     2003:	0.2868,
-//     2002:	-0.221,
-//     2001:	-0.1189,
-//     2000:	-0.091,
-//     1999:	0.2104,
-//     1998:	0.2858,
-//     1997:	0.3336,
-//     1996:	0.2296,
-//     1995:	0.3758,
-//     1994:	0.0132,
-//     1993:	0.1008,
-//     1992:	0.0762,
-//     1991:	0.3047,
-//     1990:	-0.031,
-//     1989:	0.3169,
-//     1988:	0.1661,
-//     1987:	0.0525,
-//     1986:	0.1867,
-//     1985:	0.3173,
-//     1984:	0.0627,
-//     1983:	0.2256,
-//     1982:	0.2155,
-//     1981:	-0.0491,
-//     1980:	0.3242,
-//     1979:	0.1844,
-//     1978:	0.0656,
-//     1977:	-0.0718,
-//     1976:	0.2384,
-//     1975:	0.372,
-//     1974:	-0.2647,
-//     1973:	-0.1466,
-//     1972:	0.1898,
-//     1971:	0.1431,
-//     1970:	0.0401,
-//     1969:	-0.085,
-//     1968:	0.1106,
-//     1967:	0.2398,
-//     1966:	-0.1006,
-//     1965:	0.1245,
-//     1964:	0.1648,
-//     1963:	0.228,
-//     1962:	-0.0873,
-//     1961:	0.2689,
-//     1960:	0.0047,
-//     1959:	0.1196,
-//     1958:	0.4336,
-//     1957:	-0.1078,
-//     1956:	0.0656,
-//     1955:	0.3156,
-//     1954:	0.5262,
-//     1953:	-0.0099,
-//     1952:	0.1837,
-//     1951:	0.2402,
-//     1950:	0.3171,
-//     1949:	0.1879,
-//     1948:	0.055,
-//     1947:	0.0571,
-//     1946:	-0.0807,
-//     1945:	0.3644,
-//     1944:	0.1975,
-//     1943:	0.259,
-//     1942:	0.2034,
-//     1941:	-0.1159,
-//     1940:	-0.0978,
-//     1939:	-0.0041,
-//     1938:	0.3112,
-//     1937:	-0.3503,
-//     1936:	0.3392,
-//     1935:	0.4767,
-//     1934:	-0.0144,
-//     1933:	0.5399,
-//     1932:	-0.0819,
-//     1931:	-0.4334,
-//     1930:	-0.249,
-//     1929:	-0.0842,
-//     1928:	0.4361,
-//     1927:	0.3749,
-//     1926:	0.1162
-// };
-// const INIT_YEAR = parseInt( Object.keys(HISTORICAL)[0] ); // get the earliest first year in the HISTORICAL Object
-// const LATEST_YEAR = parseInt( Object.keys(HISTORICAL)[Object.keys(HISTORICAL).length - 1] ); // get the latest year in the HISTORICAL Object
-// const EXPAND = "+"
-// const COLLAPSE = "-"
-// const EXPANDALL = "Expand All ..."
-// const COLLAPSEALL = "Collapse All ..."
+let Engine = new MasterEngine();
