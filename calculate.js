@@ -1,4 +1,3 @@
-// TODO : default option configures to the default BASED on the option selected
 // TODO : fix terminology. What is iteration? What is simulation? 
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
@@ -13,10 +12,6 @@
 
 
 
-
-let sP500 = null;
-let myPortfolio = null;
-let myResults = null;
 
 
 let MASTER_RECORDS = [ ]; 
@@ -41,7 +36,7 @@ let MASTER_RECORDS = [ iteration 0
 */
 
 
-class Market {
+class SP500 {
     constructor(historical, rOr, year) {
         this.historical = {...historical}
         this.historical_randomCopy = {...historical} // a copy of the object of market returns to be used for the random simulator
@@ -80,20 +75,21 @@ class Market {
     }
 
     get annualReturn() { //gets the annual return of the market based on the simulation option supplied by the user
-        switch (myResults.choose) {
+        switch (Engine.myResults.choose) {
             case "fixed":
                 return this.rOr;
             case "sequential":
                 if (this.year <= Global.LATEST_YEAR) {
                     return this.historical[this.year] // returns the annual S&P500 of the year this.year
                 } else if (this.loop) { // if the loop option is checked
+                    alert("Once code has been refactored, this section should never run.  code: eej071") // TODO: probably delete this line of code once everything works.
                     this.year = Global.INIT_YEAR // reset the year of the market back to the beginning
                     return this.historical[this.year]
                 } else return this.rOr // if loop not checked, defaults to the fixed rate of return
             case "random":
-                if (this.randomYearReturnObj.currentYear !== myPortfolio.currentYear) { // check if this function has been executed before for the current year, so this part won't repeat
-
-                    this.randomYearReturnObj.currentYear = myPortfolio.currentYear;
+                if (this.randomYearReturnObj.currentYear !== Engine.myPortfolio.currentYear) { // check if this function has been executed before for the current year, so this part won't repeat
+                    alert("Once code has been refactored, this section should never run. code: 3f7skQ") // TODO: probably delete this line of code once everything works
+                    this.randomYearReturnObj.currentYear = Engine.myPortfolio.currentYear;
                     let keys = Object.keys(this.historical_randomCopy); // an array of keys [i.e. remaining market years] in the historical_randomCopy object
                     let randomMktYear = keys [keys.length * Math.random() << 0] // get a random year in the market (remaining years). the << 0 operator rounds down to the nearest integer. easier than Math.floor
                     this.randomYearReturnObj.randomMktReturn = this.historical_randomCopy[randomMktYear]; // sets the annual market return for that random year in a permanent accesible object
@@ -103,6 +99,37 @@ class Market {
                 return this.randomYearReturnObj.randomMktReturn;
             default:
                 alert("error code #dddg$15v73 in Class sP500 get annualReturn() method");
+                break;
+        }
+    }
+
+    // initialize the next year in the market based on user-set options
+    newYear() {
+        switch (Engine.myResults.choose) {
+            case "fixed":
+                return;
+            case "sequential":
+                // reset the year of the market back to the beginning if the loop option is checked
+                if ( (this.year > Global.LATEST_YEAR) && (this.loop) )  this.year = Global.INIT_YEAR
+                break;
+
+            case "random":
+                if (this.randomYearReturnObj.currentYear !== Engine.myPortfolio.currentYear) {
+                    this.randomYearReturnObj.currentYear = Engine.myPortfolio.currentYear;
+                    // an array of keys [i.e. remaining market years] in the historical_randomCopy object
+                    let keys = Object.keys(this.historical_randomCopy);
+                    // get a random year in the market (remaining years). the << 0 operator rounds down to the nearest integer. easier than Math.floor
+                    let randomMktYear = keys [keys.length * Math.random() << 0]
+                    // to record the information in a permanent accesible object
+                    this.randomYearReturnObj.randomMktYear = randomMktYear
+                    // sets the annual market return for that random year in a permanent accesible object
+                    this.randomYearReturnObj.randomMktReturn = this.historical_randomCopy[randomMktYear];
+                    // delete the market return year after it has been picked out, so it can't be reused.
+                    delete this.historical_randomCopy[randomMktYear]
+                }
+                break;
+
+            default:
                 break;
         }
     }
@@ -140,7 +167,7 @@ class Portfolio {
         return Math.max(this.pValue - this.wdAmount, 0);
     }
     get return() {
-        return this.pValueMid * sP500.annualReturn;
+        return this.pValueMid * Engine.sP500.annualReturn;
     }
     get pValueEnd() {
         return (this.pValueMid + this.return < 1) ? 0 : this.pValueMid + this.return;
@@ -166,9 +193,9 @@ class Results {
     constructor(choose, scenario) {
         this.choose = choose;
         this.resultMessage = "";
-        this.initial = true; // to keep track of initial iteration scenario for one whole portfolio duration. A value of true means it is the first in the series. 
-        this.scenario = scenario; // represents one whole round, for whenn there is more than one table 
-        this.scenario === 0 ? this.dHeader() : ""; // only create the header in the first iteration. 
+        this.initial = true; // to keep track of first year of given scenario. A value of true means it is the first year in the scenario. 
+        this.scenario = scenario; // represents one whole scenario. one scenario has X (survival) years.  
+        this.scenario === 0 ? this.dHeader() : ""; // only create the header in the first year. 
         this.pass = 0; // TODO : See if this should be moved to a different class eventually
     }
     
@@ -204,7 +231,7 @@ class Results {
             let spWrapEle = document.createElement('div'); //span wrap element
             let nSpan = document.createElement('span'); //nSpan abbrev. for new span
             nSpan.style.display = "none" // to prevent rendering the display until the position has been set
-            nSpan.id = `span${this.scenario}-${myPortfolio.currentYear}` // if you change this ID, you will need to change the updatePassFailDisp() function accordingly
+            nSpan.id = `span${this.scenario}-${Engine.myPortfolio.currentYear}` // if you change this ID, you will need to change the updatePassFailDisp() function accordingly
             nSpan.innerHTML = "";
             spWrapEle.append(nSpan)
             spWrapEle.classList.add('tempPlaceHolderWrapperClass'); // see CSS styling class
@@ -217,7 +244,7 @@ class Results {
             //this following section adds a button next to the table to expand/collapse (left side)
             let btnWrapEle = document.createElement('div');
             let nButton = document.createElement('button');
-            nButton.id = `btn${this.scenario}-${myPortfolio.currentYear}`
+            nButton.id = `btn${this.scenario}-${Engine.myPortfolio.currentYear}`
             nButton.textContent = `${Global.EXPAND}`;
             btnWrapEle.append(nButton)
             btnWrapEle.classList.add('collapseDivBtn'); // see CSS styling class
@@ -227,26 +254,26 @@ class Results {
         }
 
         let tr = document.createElement('tr'); //creating new table row
-        tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
+        tr.id = `${this.scenario}-${Engine.myPortfolio.currentYear}`;
         this.tBody.append(tr); //append the new table row to the end of the table body
         this.resultMessage = "";
 
         if (this.choose === "sequential" || this.choose === "random") {
             let year = null;
             if (this.choose === "sequential") {
-                year = (sP500.year > Global.LATEST_YEAR) ? "n/a" : sP500.year; // TODO: needs to be a function at the Class Market level to return the value
-            } else if (this.choose === "random") year = sP500.randomYearReturnObj.randomMktYear;
+                year = (Engine.sP500.year > Global.LATEST_YEAR) ? "n/a" : Engine.sP500.year; // TODO: REFACTOR this section
+            } else if (this.choose === "random") year = Engine.sP500.randomYearReturnObj.randomMktYear;
             this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
-            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(sP500.annualReturn,true)}</th>` // Market Gain/Loss
+            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(Engine.sP500.annualReturn,true)}</th>` // Market Gain/Loss
         }
-        this.resultMessage += `<th scope="row">${myPortfolio.currentYear}</th>` // Year
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.wdAmount, false)}</td>` //Withdrawals
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.return, false)}</td>` // market gains/losses
-        this.resultMessage += `<td>$ ${convert2Str(myPortfolio.pValueEnd, false)}</td>` // Portfolio End
-        this.resultMessage += `<td>${convert2Str(myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
-        this.resultMessage += `<td>${myPortfolio.currentYear - myPortfolio.startYr + 1}</td>` // Years Elapsed
+        this.resultMessage += `<th scope="row">${Engine.myPortfolio.currentYear}</th>` // Year
+        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
+        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.wdAmount, false)}</td>` //Withdrawals
+        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
+        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.return, false)}</td>` // market gains/losses
+        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.pValueEnd, false)}</td>` // Portfolio End
+        this.resultMessage += `<td>${convert2Str(Engine.myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
+        this.resultMessage += `<td>${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}</td>` // Years Elapsed
         this.currentRow.innerHTML = this.resultMessage;
         
         if ((this.choose === "sequential" || this.choose === "random") && !this.initial) { // if this is NOT the first row 
@@ -257,13 +284,11 @@ class Results {
 
     appendBlank() {
         let tr = document.createElement('tr');
-        tr.id = `${this.scenario}-${myPortfolio.currentYear}`;
+        tr.id = `${this.scenario}-${Engine.myPortfolio.currentYear}`;
         tr.classList.add('blankRow')
         this.tBody.append(tr);
         this.resultMessage = "";
         if (this.choose === "sequential" || this.choose === "random") {
-            let year = (sP500.year > Global.LATEST_YEAR) ? "n/a" : sP500.year
-            let yearRoR = (sP500.year > Global.LATEST_YEAR) ? sP500.rOr : sP500.historical[sP500.year]
             this.resultMessage += `<td scope="col" class="td_small"></th>`
             this.resultMessage += `<td scope="col" class="td_small"></th>`
         }
@@ -328,15 +353,15 @@ class Results {
 
 
     get currentRow() {
-        return document.getElementById(`${this.scenario}-${myPortfolio.currentYear}`)
+        return document.getElementById(`${this.scenario}-${Engine.myPortfolio.currentYear}`)
     }
     get tBody() {
         return document.querySelector(`tbody`);
     }
     get passFailRatio() {
-        let str = `The portfolio has survived ${myResults.pass} times out of ${MASTER_RECORDS.length} scenarios. `;
+        let str = `The portfolio has survived ${Engine.myResults.pass} times out of ${MASTER_RECORDS.length} scenarios. `;
         str += "<br>";
-        str += `This gives it pass rate of ${convert2Str(myResults.pass/MASTER_RECORDS.length,true)} based on a survival duration of ${myPortfolio.survivalD} years`;
+        str += `This gives it pass rate of ${convert2Str(Engine.myResults.pass/MASTER_RECORDS.length,true)} based on a survival duration of ${Engine.myPortfolio.survivalD} years`;
         return str;
     }
     
@@ -345,6 +370,9 @@ class Results {
 
 class MasterEngine {
     constructor() {
+        this.sP500 = null;
+        this.myPortfolio = null;
+        this.myResults = null;
         this.addClick();
     }
     
@@ -382,19 +410,19 @@ class MasterEngine {
         // let numTrials = convert2Num(document.getElementById('trials').value, false);
         let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
 
-        sP500 = null; // the null values resets or "cleans up" any values lingering in the object
-        sP500 = new Market(Global.HISTORICAL, rReturn, iteration + Global.INIT_YEAR);
-        myPortfolio = null;
-        myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
-        myResults = null;
-        myResults = new Results(Global.optionSelected.id, iteration);
+        this.sP500 = null; // the null values resets or "cleans up" any values lingering in the object
+        this.sP500 = new SP500(Global.HISTORICAL, rReturn, iteration + Global.INIT_YEAR);
+        this.myPortfolio = null;
+        this.myPortfolio = new Portfolio(pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio);
+        this.myResults = null;
+        this.myResults = new Results(Global.optionSelected.id, iteration);
     }
 
     /**
      * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year has been reached. 
      */
     simulator() {
-        switch (myResults.choose) {
+        switch (this.myResults.choose) {
 
             case "fixed":
                 this.oneWholeScenario();
@@ -402,11 +430,11 @@ class MasterEngine {
                 break;
         
             case "sequential":
-                while (myResults.scenario + Global.INIT_YEAR < Global.LATEST_YEAR) {
+                while (this.myResults.scenario + Global.INIT_YEAR < Global.LATEST_YEAR) { //TODO: switching the operator from < to <= may resolve the year 2021 not coming out.
                     this.oneWholeScenario();
-                    myResults.appendBlank();
-                    myResults.scenario++;
-                    Engine.setValues(myResults.scenario);
+                    this.myResults.appendBlank();
+                    this.myResults.scenario++;
+                    Engine.setValues(this.myResults.scenario);
                 }
                 setTimeout(() => { //set timeout since the result span text also has it
                     this.updatePassFailDisp();
@@ -417,12 +445,11 @@ class MasterEngine {
             case "random":
                 let iterations = convert2Num(document.getElementById('trials').value, false); // declare user-specified num trials or iterations
                 if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
-                while (myResults.scenario < iterations) {
-                    sP500.annualReturn; // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
+                while (this.myResults.scenario < iterations) {
                     this.oneWholeScenario(); 
-                    myResults.appendBlank();
-                    myResults.scenario++;
-                    Engine.setValues(myResults.scenario);
+                    this.myResults.appendBlank();
+                    this.myResults.scenario++;
+                    Engine.setValues(this.myResults.scenario);
                 }
                 setTimeout( () => { //set timeout since the result span text also has it
                     this.updatePassFailDisp();
@@ -439,16 +466,17 @@ class MasterEngine {
      * This function goes through one whole scenario from beginning year to end year to see how well the portfolio holds
      */
     oneWholeScenario() {
-        while (myPortfolio.currentYear !== myPortfolio.finalYr) { // TODO: may need to adjust this a bit to see if it fixes the last year expand button in the chronological sequence option
-            myResults.append(); // appends a row of results for display output. 
+        while (this.myPortfolio.currentYear !== this.myPortfolio.finalYr) {
+            this.sP500.newYear(); // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
             this.recordResult(); // records the result in the master array
+            this.myResults.append(); // appends a row of results for display output. 
             //functions to update variables for the following year
-            myPortfolio.pValue = myPortfolio.pValueEnd;
-            myPortfolio.priorYrReturn = sP500.annualReturn; // to keep track of the prior year return. The ordering is very important here.
-            myPortfolio.currentYear++;
-            myPortfolio.wdRate = myPortfolio.wdRate * (1 + myPortfolio.infl)
-            if (myResults.choose === "sequential") sP500.year++;
-            else if (myResults.choose === "random") sP500.annualReturn; //to update the Market object .randomYearReturnObj for the new year.
+            this.myPortfolio.pValue = this.myPortfolio.pValueEnd;
+            this.myPortfolio.priorYrReturn = this.sP500.annualReturn; // to keep track of the prior year return. The ordering is very important here.
+            this.myPortfolio.currentYear++;
+            this.myPortfolio.wdRate = this.myPortfolio.wdRate * (1 + this.myPortfolio.infl)
+            if (this.myResults.choose === "sequential") this.sP500.year++;
+            //else if (this.myResults.choose === "random") this.sP500.annualReturn; //to update the SP500 object .randomYearReturnObj for the new year.   TODO: Delete this 
         }
     }
 
@@ -469,13 +497,13 @@ class MasterEngine {
             if (portfolioEnd > 0) {
                 element.innerHTML = "Pass"
                 element.style.color = "green"
-                myResults.pass++ // to keep track of how many times the portfolio survived
+                this.myResults.pass++ // to keep track of how many times the portfolio survived
             } else {
                 element.innerHTML = "Fail!"
                 element.style.color = "red"
             }
         }
-        document.getElementById('caption').innerHTML = myResults.passFailRatio; 
+        document.getElementById('caption').innerHTML = this.myResults.passFailRatio; 
     }
 
     /**
@@ -483,31 +511,31 @@ class MasterEngine {
      */
     recordResult() {
         
-        let scenario = myResults.scenario // the scenario or iteration being run
+        let scenario = this.myResults.scenario // the scenario or iteration being run
         if (typeof scenario !== "number") alert("Something may go wrong in the program. code ref 4&vv&je@687")
         MASTER_RECORDS.length < scenario + 1 ? MASTER_RECORDS[scenario] = [] : ""; // to first create the empty array space if not done so already
-        let currentRow = myPortfolio.currentYear - myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
+        let currentRow = this.myPortfolio.currentYear - this.myPortfolio.startYr; // to figure out the row of the time period year in a given scenario or iteration
         MASTER_RECORDS[scenario][currentRow] === undefined ? MASTER_RECORDS[scenario][currentRow] = {} : ""  // to create an empty object space if not done so already
 
         let mktYear = "n/a" //fixed results
-        let theReturn = sP500.rOr; //fixed results
-        if (myResults.choose === "sequential") {
-            mktYear = sP500.year;
-            theReturn = sP500.annualReturn;
-        } else if (myResults.choose === "random") {
-            mktYear = sP500.randomYearReturnObj.randomMktYear;
-            theReturn = sP500.randomYearReturnObj.randomMktReturn;
+        let theReturn = this.sP500.rOr; //fixed results
+        if (this.myResults.choose === "sequential") {
+            mktYear = this.sP500.year;
+            theReturn = this.sP500.annualReturn;
+        } else if (this.myResults.choose === "random") {
+            mktYear = this.sP500.randomYearReturnObj.randomMktYear;
+            theReturn = this.sP500.randomYearReturnObj.randomMktReturn;
         }
         let object = {  // CREATE OBJECT HERE to be inserted based on the values below
             MktYear : mktYear,
             Return : theReturn,
-            PortfolioYr : myPortfolio.currentYear,
-            PortfolioBeg : myPortfolio.pValue,
-            Withdrawal : myPortfolio.wdAmount,
-            PortfolioMid : myPortfolio.pValue,
-            MktGainsLoss : myPortfolio.return,
-            PortfolioEnd : myPortfolio.pValueEnd,
-            HypoWD : myPortfolio.wdRateHypo,
+            PortfolioYr : this.myPortfolio.currentYear,
+            PortfolioBeg : this.myPortfolio.pValue,
+            Withdrawal : this.myPortfolio.wdAmount,
+            PortfolioMid : this.myPortfolio.pValue,
+            MktGainsLoss : this.myPortfolio.return,
+            PortfolioEnd : this.myPortfolio.pValueEnd,
+            HypoWD : this.myPortfolio.wdRateHypo,
             YearsElapsed : currentRow + 1
         }
         MASTER_RECORDS[scenario][currentRow] = {...object}
