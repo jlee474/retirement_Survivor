@@ -198,22 +198,23 @@ class Results {
         document.querySelector(`table`).append(tbody)
     }
 
-    append(){
+
+
+    createTblRow(){
         if (this.initial && this.choose !== "fixed") {  // adds the buttons and side result text. to check if its the initial row with data
             
             // this block of code adds the text result display that shows on the right side
             let spWrapEle = this.createEle('div', {class: "tempPlaceHolderWrapperClass"});
             let nSpan = this.createEle('span', {style: "display: none", id: `span${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "tempPlaceHolderSpanClass"}, "", true);
-
             spWrapEle.append(nSpan)
             this.tBody.insertAdjacentElement('beforeend', spWrapEle);
-             // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
+
+            // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
             setTimeout(  ()=> { 
                 spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
             }, 0 )
 
             //this following section adds a button next to the table to expand/collapse (left side)
-                
             let btnWrapEle = this.createEle('div', {class: "collapseDivBtn"});
             let nButton = this.createEle('button', {id: `btn${this.scenario}-${Engine.myPortfolio.currentYear}`, class: 'collapseBtn'}, `${Global.EXPAND}`, true)
             btnWrapEle.append(nButton)
@@ -221,9 +222,14 @@ class Results {
             this.expand(nButton); // function to add the event handler and functionality
 
         }
-
         // the following section appends the results of a given year as a table row
         let tr = this.createEle('tr', {id:`${this.scenario}-${Engine.myPortfolio.currentYear}`})
+
+        // for sequential and random options: if this is NOT the first row, add a collapsible class tag
+        if ((this.choose === "sequential" || this.choose === "random") && !this.initial) {
+            tr.classList.add('collapsible');
+        }
+
         let td0a = "";
         let td0b = "";
 
@@ -247,9 +253,6 @@ class Results {
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
         this.tBody.append(tr);
 
-        if ((this.choose === "sequential" || this.choose === "random") && !this.initial) { // if this is NOT the first row 
-            document.querySelector('tbody').lastElementChild.classList.add('collapsible')
-        }
         this.initial = false; // after this method has run, the next run won't be the initial
     }
 
@@ -514,7 +517,7 @@ class MasterEngine {
         while (this.myPortfolio.currentYear !== this.myPortfolio.finalYr) {
             this.sP500.newYear(); // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
             this.recordResult(); // records the result in the master array
-            this.myResults.append(); // appends a row of results for display output. 
+            this.myResults.createTblRow(); // appends a row of results for display output. 
             //functions to update variables for the following year
             this.myPortfolio.pValue = this.myPortfolio.pValueEnd;
             this.myPortfolio.priorYrReturn = this.sP500.annualReturn; // to keep track of the prior year return. The ordering is very important here.
