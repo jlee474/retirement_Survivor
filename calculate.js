@@ -170,26 +170,30 @@ class Results {
     }
     
     dHeader() {
-        this.resultMessage += `<table>`
-        this.resultMessage += `<caption id="caption"> Loading results ... </caption>`
-        this.resultMessage += `<thead>`
-        this.resultMessage += `<tr>`;
+        
+        let table = this.createEle('table');
+        let caption = this.createEle('caption', {id: "caption"}, "Loading results ...", true);
+        let thead = this.createEle('thead');
+        let tr = this.createEle('tr');
+        let th0a = "";
+        let th0b = "";
         if (this.choose === "sequential" || this.choose === "random") {
-            this.resultMessage += `<th scope="col" class="td_small">(S&P500 <br> Year)</th>`
-            this.resultMessage += `<th scope="col" class="td_small">(Pct <br>Gains/Loss)</th>`
+            th0a = this.createEle('th', {scope:"col", class:"td_small"},'(S&P500 <br> Year)', false);
+            th0b = this.createEle('th', {scope:"col", class:"td_small"},'(Pct <br>Gains/Loss)', false);
         }
-        this.resultMessage += `<th scope="col">Year</th>`
-        this.resultMessage += `<th scope="col">Portfolio <br>Beg. Value</th>`
-        this.resultMessage += `<th scope="col">Withdrawals</th>`
-        this.resultMessage += `<th scope="col">Portfolio <br>Mid. Value</th>`
-        this.resultMessage += `<th scope="col">Market <br>Gains/Losses</th>`
-        this.resultMessage += `<th scope="col">Portfolio <br>End. Value</th>`
-        this.resultMessage += `<th scope="col">Hypo % <br>W/D Rate</th>`
-        this.resultMessage += `<th scope="col">Years <br>Elapsed</th>`
-        this.resultMessage += `</tr>`
-        this.resultMessage += `</thead>`
-        this.resultMessage += `</table>`
-        document.getElementById('results').innerHTML = `${this.resultMessage}`;
+        let th1 = this.createEle('th', {scope: 'col'}, 'Year', true);
+        let th2 = this.createEle('th', {scope: 'col'}, 'Portfolio <br>Beg. Value', false);
+        let th3 = this.createEle('th', {scope: 'col'}, 'Withdrawals', true)
+        let th4 = this.createEle('th', {scope: 'col'}, 'Portfolio <br>Mid. Value', false)
+        let th5 = this.createEle('th', {scope: 'col'}, 'Market <br>Gains/Losses', false)
+        let th6 = this.createEle('th', {scope: 'col'}, 'Portfolio <br>End. Value', false)
+        let th7 = this.createEle('th', {scope: 'col'}, 'Hypo % <br>W/D Rate', false)
+        let th8 = this.createEle('th', {scope: 'col'}, 'Years <br>Elapsed', false)
+        
+        tr.append(th0a, th0b, th1, th2, th3, th4, th5, th6, th7, th8)
+        thead.append(tr);
+        table.append(caption, thead);
+        document.getElementById('results').append(table);
         let tbody = document.createElement('tbody');
         document.querySelector(`table`).append(tbody)
     }
@@ -198,14 +202,10 @@ class Results {
         if (this.initial && this.choose !== "fixed") {  // adds the buttons and side result text. to check if its the initial row with data
             
             // this block of code adds the text result display that shows on the right side
-            let spWrapEle = document.createElement('div'); //span wrap element
-            let nSpan = document.createElement('span'); //nSpan abbrev. for new span
-            nSpan.style.display = "none" // to prevent rendering the display until the position has been set
-            nSpan.id = `span${this.scenario}-${Engine.myPortfolio.currentYear}` // if you change this ID, you will need to change the updatePassFailDisp() function accordingly
-            nSpan.innerHTML = "";
+            let spWrapEle = this.createEle('div', {class: "tempPlaceHolderWrapperClass"});
+            let nSpan = this.createEle('span', {style: "display: none", id: `span${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "tempPlaceHolderSpanClass"}, "", true);
+
             spWrapEle.append(nSpan)
-            spWrapEle.classList.add('tempPlaceHolderWrapperClass'); // see CSS styling class
-            nSpan.classList.add('tempPlaceHolderSpanClass') // see CSS styling class
             this.tBody.insertAdjacentElement('beforeend', spWrapEle);
              // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
             setTimeout(  ()=> { 
@@ -213,39 +213,40 @@ class Results {
             }, 0 )
 
             //this following section adds a button next to the table to expand/collapse (left side)
-            let btnWrapEle = document.createElement('div');
-            let nButton = document.createElement('button');
-            nButton.id = `btn${this.scenario}-${Engine.myPortfolio.currentYear}`
-            nButton.textContent = `${Global.EXPAND}`;
+                
+            let btnWrapEle = this.createEle('div', {class: "collapseDivBtn"});
+            let nButton = this.createEle('button', {id: `btn${this.scenario}-${Engine.myPortfolio.currentYear}`, class: 'collapseBtn'}, `${Global.EXPAND}`, true)
             btnWrapEle.append(nButton)
-            btnWrapEle.classList.add('collapseDivBtn'); // see CSS styling class
-            nButton.classList.add('collapseBtn') // see CSS styling class
             this.tBody.insertAdjacentElement('beforeend', btnWrapEle);
             this.expand(nButton); // function to add the event handler and functionality
+
         }
 
-        let tr = document.createElement('tr'); //creating new table row
-        tr.id = `${this.scenario}-${Engine.myPortfolio.currentYear}`;
-        this.tBody.append(tr); //append the new table row to the end of the table body
-        this.resultMessage = "";
+        // the following section appends the results of a given year as a table row
+        let tr = this.createEle('tr', {id:`${this.scenario}-${Engine.myPortfolio.currentYear}`})
+        let td0a = "";
+        let td0b = "";
 
         if (this.choose === "sequential" || this.choose === "random") {
             let year = null;
             if (this.choose === "sequential")  year = Engine.sP500.year;
             else if (this.choose === "random")  year = Engine.sP500.randomYearReturnObj.randomMktYear;
-            this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
-            this.resultMessage += `<td scope="col" class="td_small">${Global.convert2Str(Engine.sP500.annualReturn,true)}</th>` // Market Gain/Loss
-        }
-        this.resultMessage += `<th scope="row">${Engine.myPortfolio.currentYear}</th>` // Year
-        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
-        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.wdAmount, false)}</td>` //Withdrawals
-        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
-        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.return, false)}</td>` // market gains/losses
-        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.pValueEnd, false)}</td>` // Portfolio End
-        this.resultMessage += `<td>${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
-        this.resultMessage += `<td>${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}</td>` // Years Elapsed
-        this.currentRow.innerHTML = this.resultMessage;
+            td0a = this.createEle('td', {scope: "col", class: "td_small"},`(${year})`, true);
+            td0b = this.createEle('td', {scope: "col", class: "td_small"},`${Global.convert2Str(Engine.sP500.annualReturn,true)}`, true);
+        };
         
+        let th = this.createEle('th', {scope: "row"}, `${Engine.myPortfolio.currentYear}`,true) // Year
+        let td1 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.pValue, false)}`, true); //Portofolio Beg Value
+        let td2 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.wdAmount, false)}`, true); //Withdrawals
+        let td3 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.pValueMid, false)}`, true); //Portfolio mid value
+        let td4 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.return, false)}`, true);  //market gains/losses
+        let td5 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.pValueEnd, false)}`, true);  //Portfolio End
+        let td6 = this.createEle('td', {}, `${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)}`,true);  //Hypo % W/D Rate
+        let td7 = this.createEle('td', {}, `${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}`,true); //Years Elapsed
+        
+        tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
+        this.tBody.append(tr);
+
         if ((this.choose === "sequential" || this.choose === "random") && !this.initial) { // if this is NOT the first row 
             document.querySelector('tbody').lastElementChild.classList.add('collapsible')
         }
@@ -253,25 +254,26 @@ class Results {
     }
 
     appendBlank() {
-        let tr = document.createElement('tr');
-        tr.id = `${this.scenario}-${Engine.myPortfolio.currentYear}`;
-        tr.classList.add('blankRow')
-        this.tBody.append(tr);
-        this.resultMessage = "";
+
+        let tr = this.createEle('tr', {id: `${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "blankRow"})
+        let td0a = "";
+        let td0b = "";
         if (this.choose === "sequential" || this.choose === "random") {
-            this.resultMessage += `<td scope="col" class="td_small"></th>`
-            this.resultMessage += `<td scope="col" class="td_small"></th>`
+            td0a = this.createEle("td", {scope: "col", class: "td_small"});
+            td0b = this.createEle("td", {scope: "col", class: "td_small"});
         }
-        this.resultMessage += `<th scope="row"></th>`
-        this.resultMessage += `<td></td>`
-        this.resultMessage += `<td></td>`
-        this.resultMessage += `<td></td>`
-        this.resultMessage += `<td></td>`
-        this.resultMessage += `<td></td>`
-        this.resultMessage += `<td></td>`
-        this.resultMessage += `<td></td>`
-        this.currentRow.innerHTML = this.resultMessage;
+        let th = this.createEle('th', {scope:"row"});
+        let td1 = this.createEle('td');
+        let td2 = this.createEle('td');
+        let td3 = this.createEle('td');
+        let td4 = this.createEle('td');
+        let td5 = this.createEle('td');
+        let td6 = this.createEle('td');
+        let td7 = this.createEle('td');
+        tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
+        this.tBody.append(tr);
         // document.querySelector('tbody').lastElementChild.classList.add('collapsible')   <-- add this if you want to collapse the blank row as well
+
         this.initial = true;
     }
 
@@ -327,6 +329,28 @@ class Results {
         return (callback != undefined) ? callback(qArray) : qArray; // if callback function present, return it with the result as the argument
     }
 
+    /**
+     * 
+     * @param {string} element type in string format
+     * @param {object} attributes element attributes, such as {<attribute type> : <attribute value>}
+     * @param {string} text content inside the html element, text content or innerHTML  
+     * @param {boolean} textOrInner true = textContent. false = innerHTML. use innerHTML if it includes tags like <br>
+     * @returns an HTML element with the properties specified in the argument
+     */
+    createEle(element, attributes={}, text = undefined, textOrInner=true) {
+        let newEle = document.createElement(element);
+        let keys = Object.keys(attributes);
+        if (keys.length > 0) {
+            for (let key of keys) {
+                newEle.setAttribute(key, attributes[key])
+            }
+        }
+        if (text !== undefined) {
+            if (textOrInner)  newEle.textContent = text;
+            else newEle.innerHTML = text;
+        }
+        return newEle;
+    }
 
     get currentRow() {
         return document.getElementById(`${this.scenario}-${Engine.myPortfolio.currentYear}`)
@@ -447,7 +471,7 @@ class MasterEngine {
 
             case "fixed":
                 this.oneWholeScenario();
-                document.getElementById('caption').innerHTML = "";  // to remove the Loading result caption for fixed use cases.
+                document.getElementById('caption').textContent = "";  // to remove the Loading result caption for fixed use cases.
                 break;
         
             case "sequential":
@@ -515,14 +539,16 @@ class MasterEngine {
             element.style.display = ""
             element.style.fontStyle = "italic"
             if (portfolioEnd > 0) {
-                element.innerHTML = "Pass"
+                element.textContent = "Pass"
                 element.style.color = "green"
                 this.myResults.pass++ // to keep track of how many times the portfolio survived
             } else {
-                element.innerHTML = "Fail!"
+                element.textContent = "Fail!"
                 element.style.color = "red"
             }
         }
+
+        // innerHTML, textcontent won't work render html formatting like <br>
         document.getElementById('caption').innerHTML = this.myResults.passFailRatio; 
     }
 
