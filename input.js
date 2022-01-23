@@ -1,10 +1,7 @@
 // TODO: Feature to add start and stop years
 // TODO: Center align everything
-// TODO: Prevent user from inputting multiple decimal periods.
 // TODO: delete multiple zeros, i.e. as of this year yyyy --> try entering in 0001
 // TODO: Inflation rate -- try entering in 0.089 and removing focus, and refocus. average annual return, try 0.058 
-// TODO: Fix assumptions -- loop bug
-// TODO : move the convert2num and convert2str functions to the global
 // my regex function that needs work in eliminating trailing zeros /[0^.]+$|/g  sort of works but it also eliminates 0 without decimal, like 3500 -> 35
 
 
@@ -40,9 +37,9 @@
                 case "rReturn":
                 case "reduction":
                     if (target.value.includes("%")) {
-                        target.value = convert2Num(target.value, true);
+                        target.value = Global.convert2Num(target.value, true);
                     } else if (target.value.includes("$")) {
-                        target.value = convert2Num(target.value, false)
+                        target.value = Global.convert2Num(target.value, false)
                     }
                     break;
                 default:
@@ -74,7 +71,7 @@
                 case "pValue":
                     // in all cases remove any preceding 0's, e.g. 001234 => 1234 || 00.1234 => .1234
                     target.value = target.value.replace( /^0/g,""); 
-                    target.value = "$ "+ convert2Str(target.value, false); 
+                    target.value = "$ "+ Global.convert2Str(target.value, false); 
                     break;
               
                 // for cases that can be either $ or % decimal
@@ -83,13 +80,13 @@
                     // TODO: May not need this first if statement, it will always be formatted as a number here because of the "edit mode"
                     if (typeof target.value === 'string' || isNaN(target.value)) { 
                         if (target.value.includes("%")) {
-                            target.value = convert2Num(target.value, true);
+                            target.value = Global.convert2Num(target.value, true);
                         } else if (target.value.includes("$")) {
-                            target.value = convert2Num(target.value, false)
+                            target.value = Global.convert2Num(target.value, false)
                         }
                     }
                     if (target.value <= 1) {
-                        target.value = convert2Str(target.value, true)
+                        target.value = Global.convert2Str(target.value, true)
                     } else if (target.value > 1) {
                         // to remove decimals
                         target.value = parseInt(target.value) 
@@ -110,7 +107,7 @@
                             if (!target.value.includes('%')) {
                                 target.value = parseFloat(target.value)
                                 if (isNaN(target.value)) target.value = "";
-                                target.value = convert2Str(target.value, true)
+                                target.value = Global.convert2Str(target.value, true)
                             }
                         }
                     }
@@ -191,7 +188,7 @@ function inputValidator(target, callback) {
  * @param {boolean} decimal true means number is a decimal form, false means integer generally
  * @param {Function} callback an optional callback function, passing in the return result as an argument
  * @returns a value formatted for pretty display and/or callback if passed in
- */
+ *//*
 function convert2Str(number, decimal, callback) {  // this after. it will format the input after user has typed it and selection has changed. 
     let result = ""
     if (decimal) {
@@ -211,7 +208,7 @@ function convert2Str(number, decimal, callback) {  // this after. it will format
  * @param {boolean} decimal true means value should be converted to a decimal (i.e. for values expressed in %). False means we are just formatting an integer
  * @param {Function} callback an optional callback function
  * @returns a value formatted for numerical calculations
- */
+ *//*
 function convert2Num(str, decimal = false, callback) {
     // decimal === undefined ? false : true; // if decimal is not passed in as argument
     let number = 0;
@@ -222,7 +219,7 @@ function convert2Num(str, decimal = false, callback) {
     return callback === undefined ? number : callback(number);
 }
 
-
+*/
 
 
 

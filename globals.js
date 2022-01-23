@@ -180,6 +180,43 @@ class globe {
       appendLoc.append(li)
    }
 
+
+   /**
+    * @param {number} number the number to be converted or formatted for pretty display 
+    * @param {boolean} decimal true means number is a decimal form, false means integer generally
+    * @param {Function} callback an optional callback function, passing in the return result as an argument
+    * @returns a value formatted for pretty display and/or callback if passed in
+    */
+   convert2Str(number, decimal, callback) {  // this after. it will format the input after user has typed it and selection has changed. 
+      let result = ""
+      if (decimal) {
+         result = `${(number * 100)}`.slice(0, 6) // only take the first six digits incase it is an infinite decimal
+         result = result.replace( /(((?<=(\.|,)\d*?[1-9])0+$)|(\.|,)0+$)/g, "") // a very complicated regex that removes any trailing zeroes after the decimal. had to find it online. https://stackoverflow.com/questions/26299160/using-regex-how-do-i-remove-the-trailing-zeros-from-a-decimal-number
+         result = `${result} %`;
+      } else {
+         number = Math.round(number); // round to the nearest integer
+         result = Number(number).toLocaleString() //adds a thousandth separator
+      }
+      return callback === undefined ? result : callback(result);
+   }
+
+
+   /**
+   * @param {string} str the string to be converted to a number
+   * @param {boolean} decimal true means value should be converted to a decimal (i.e. for values expressed in %). False means we are just formatting an integer
+   * @param {Function} callback an optional callback function
+   * @returns a value formatted for numerical calculations
+   */
+   convert2Num(str, decimal = false, callback) {
+      // decimal === undefined ? false : true; // if decimal is not passed in as argument
+      let number = 0;
+      if (decimal) {
+         number = parseFloat(  str.replace(/[^0-9.]/g, ""))/100; // removes all commas, $ and returns decimal
+      }
+      else number = parseInt(str.replace(/[^0-9.]/g, "")) // should remove all commas and return integer
+      return callback === undefined ? number : callback(number);
+   }
+
 }
 
 const Global = new globe()

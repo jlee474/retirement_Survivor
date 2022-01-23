@@ -207,9 +207,10 @@ class Results {
             spWrapEle.classList.add('tempPlaceHolderWrapperClass'); // see CSS styling class
             nSpan.classList.add('tempPlaceHolderSpanClass') // see CSS styling class
             this.tBody.insertAdjacentElement('beforeend', spWrapEle);
+             // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
             setTimeout(  ()=> { 
                 spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
-            }, 0 ) // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
+            }, 0 )
 
             //this following section adds a button next to the table to expand/collapse (left side)
             let btnWrapEle = document.createElement('div');
@@ -233,15 +234,15 @@ class Results {
             if (this.choose === "sequential")  year = Engine.sP500.year;
             else if (this.choose === "random")  year = Engine.sP500.randomYearReturnObj.randomMktYear;
             this.resultMessage += `<td scope="col" class="td_small">( ${year} )</th>` //Market Year
-            this.resultMessage += `<td scope="col" class="td_small">${convert2Str(Engine.sP500.annualReturn,true)}</th>` // Market Gain/Loss
+            this.resultMessage += `<td scope="col" class="td_small">${Global.convert2Str(Engine.sP500.annualReturn,true)}</th>` // Market Gain/Loss
         }
         this.resultMessage += `<th scope="row">${Engine.myPortfolio.currentYear}</th>` // Year
-        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
-        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.wdAmount, false)}</td>` //Withdrawals
-        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
-        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.return, false)}</td>` // market gains/losses
-        this.resultMessage += `<td>$ ${convert2Str(Engine.myPortfolio.pValueEnd, false)}</td>` // Portfolio End
-        this.resultMessage += `<td>${convert2Str(Engine.myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
+        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.pValue, false)}</td>` //Portofolio Beg Value
+        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.wdAmount, false)}</td>` //Withdrawals
+        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.pValueMid, false)}</td>` //Portfolio mid value
+        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.return, false)}</td>` // market gains/losses
+        this.resultMessage += `<td>$ ${Global.convert2Str(Engine.myPortfolio.pValueEnd, false)}</td>` // Portfolio End
+        this.resultMessage += `<td>${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)} </td>` // Hypo % W/D Rate
         this.resultMessage += `<td>${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}</td>` // Years Elapsed
         this.currentRow.innerHTML = this.resultMessage;
         
@@ -280,7 +281,7 @@ class Results {
      * @param {*} callback an optional callback function
      * @returns undefined. This function simply sets the event handler to the element.
      */
-     expand(element, callback) {
+    expand(element, callback) {
         element.addEventListener('click', (e) => {
             if (e.target.textContent === Global.EXPAND) {
                 e.target.textContent = Global.COLLAPSE;
@@ -296,6 +297,12 @@ class Results {
                         ele.style.display = "";
                     }
                 });
+            }
+
+            // this section will move the Pass/Fail display when the table size changes
+            let spans = document.getElementsByClassName('tempPlaceHolderWrapperClass')
+            for (let span of spans) {
+                span.style.left = `${document.querySelector('tr').clientWidth + 15}px`
             }
         })
         callback; //optional callback
@@ -330,7 +337,7 @@ class Results {
     get passFailRatio() {
         let str = `The portfolio has survived ${Engine.myResults.pass} times out of ${Engine.master_records.length} scenarios. `;
         str += "<br>";
-        str += `This gives it pass rate of ${convert2Str(Engine.myResults.pass/Engine.master_records.length,true)} based on a survival duration of ${Engine.myPortfolio.survivalD} years`;
+        str += `This gives it pass rate of ${Global.convert2Str(Engine.myResults.pass/Engine.master_records.length,true)} based on a survival duration of ${Engine.myPortfolio.survivalD} years`;
         return str;
     }
     
@@ -365,31 +372,31 @@ class MasterEngine {
 
     grabInputs() {
         let wdr = document.getElementById('wd_Rate');
-        if (wdr.value === "") wdr.value = `$ ${convert2Str(0, false)}`;
+        if (wdr.value === "") wdr.value = `$ ${Global.convert2Str(0, false)}`;
         if (wdr.value.includes("%")) { // if withdrawal rate is expressed as a decimal, convert to a fixed amount //
-            let decimal = convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
-            let pVal = convert2Num(document.getElementById('pValue').value, false);
-            wdr.value = `$ ${convert2Str(decimal * pVal, false)}`;
+            let decimal = Global.convert2Num(document.getElementById('wd_Rate').value, true); // convert to a calculative decimal 
+            let pVal = Global.convert2Num(document.getElementById('pValue').value, false);
+            wdr.value = `$ ${Global.convert2Str(decimal * pVal, false)}`;
         }
-        let withdrawalRate = convert2Num(document.getElementById('wd_Rate').value, false);
-        let rReturn = convert2Num(document.getElementById('rReturn').value, true);
+        let withdrawalRate = Global.convert2Num(document.getElementById('wd_Rate').value, false);
+        let rReturn = Global.convert2Num(document.getElementById('rReturn').value, true);
         if (isNaN(rReturn)) {
             rReturn = 0;
-            document.getElementById('rReturn').value = convert2Str(0, true);
+            document.getElementById('rReturn').value = Global.convert2Str(0, true);
         }
-        let pValue = convert2Num(document.getElementById('pValue').value, false);
-        let infl = convert2Num(document.getElementById('infl').value, true);
+        let pValue = Global.convert2Num(document.getElementById('pValue').value, false);
+        let infl = Global.convert2Num(document.getElementById('infl').value, true);
         if (isNaN(infl)) {
             infl = 0;
-            document.getElementById('infl').value = convert2Str(0, true);
+            document.getElementById('infl').value = Global.convert2Str(0, true);
         }
-        let startDate = convert2Num(document.getElementById('startDate').value, false);
+        let startDate = Global.convert2Num(document.getElementById('startDate').value, false);
         if (startDate === "" || isNaN(startDate)) {
             startDate = new Date().getFullYear();
             document.getElementById('startDate').value = startDate;
         }
-        let survivalDuration = convert2Num(document.getElementById('survival').value, false);
-        let reductionRatio = convert2Num(document.getElementById('reduction').value, true);
+        let survivalDuration = Global.convert2Num(document.getElementById('survival').value, false);
+        let reductionRatio = Global.convert2Num(document.getElementById('reduction').value, true);
         this.userInputs = {rReturn, pValue, infl, startDate, withdrawalRate, survivalDuration, reductionRatio}
     }
 
@@ -448,7 +455,7 @@ class MasterEngine {
                     this.oneWholeScenario();
                     this.myResults.appendBlank();
                     this.myResults.scenario++;
-                    Engine.setValues(this.myResults.scenario);
+                    this.setValues(this.myResults.scenario);
                 }
                 setTimeout(() => { //set timeout since the result span text also has it
                     this.updatePassFailDisp();
@@ -457,13 +464,13 @@ class MasterEngine {
                 break;
 
             case "random":
-                let iterations = convert2Num(document.getElementById('trials').value, false); // declare user-specified number iterations
+                let iterations = Global.convert2Num(document.getElementById('trials').value, false); // declare user-specified number iterations
                 if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
                 while (this.myResults.scenario < iterations) {
                     this.oneWholeScenario(); 
                     this.myResults.appendBlank();
                     this.myResults.scenario++;
-                    Engine.setValues(this.myResults.scenario);
+                    this.setValues(this.myResults.scenario);
                 }
                 setTimeout( () => { //set timeout since the result span text also has it
                     this.updatePassFailDisp();
