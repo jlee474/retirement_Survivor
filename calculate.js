@@ -200,15 +200,15 @@ class Results {
 
 
 
-    createTblRow(){
+    createTblRow(elementArray){
+
         if (this.initial && this.choose !== "fixed") {  // adds the buttons and side result text. to check if its the initial row with data
-            
             // this block of code adds the text result display that shows on the right side
             let spWrapEle = this.createEle('div', {class: "tempPlaceHolderWrapperClass"});
             let nSpan = this.createEle('span', {style: "display: none", id: `span${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "tempPlaceHolderSpanClass"}, "", true);
             spWrapEle.append(nSpan)
-            this.tBody.insertAdjacentElement('beforeend', spWrapEle);
-
+            // this.tBody.insertAdjacentElement('beforeend', spWrapEle);
+                        elementArray.push(spWrapEle);
             // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
             setTimeout(  ()=> { 
                 spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
@@ -218,10 +218,11 @@ class Results {
             let btnWrapEle = this.createEle('div', {class: "collapseDivBtn"});
             let nButton = this.createEle('button', {id: `btn${this.scenario}-${Engine.myPortfolio.currentYear}`, class: 'collapseBtn'}, `${Global.EXPAND}`, true)
             btnWrapEle.append(nButton)
-            this.tBody.insertAdjacentElement('beforeend', btnWrapEle);
-            this.expand(nButton); // function to add the event handler and functionality
-
+            // this.tBody.insertAdjacentElement('beforeend', btnWrapEle);
+                        elementArray.push(btnWrapEle);
+            this.expand(nButton); // function to add the event handler and functionality // TODO: Caution check if this still will work with the refactoring or if order is important.....
         }
+
         // the following section appends the results of a given year as a table row
         let tr = this.createEle('tr', {id:`${this.scenario}-${Engine.myPortfolio.currentYear}`})
 
@@ -232,7 +233,6 @@ class Results {
 
         let td0a = "";
         let td0b = "";
-
         if (this.choose === "sequential" || this.choose === "random") {
             let year = null;
             if (this.choose === "sequential")  year = Engine.sP500.year;
@@ -251,12 +251,15 @@ class Results {
         let td7 = this.createEle('td', {}, `${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}`,true); //Years Elapsed
         
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
-        this.tBody.append(tr);
+        // this.tBody.append(tr);
+                    elementArray.push(tr);
 
         this.initial = false; // after this method has run, the next run won't be the initial
+
+        return elementArray;
     }
 
-    appendBlank() {
+    createBlankRow(elementArray) {
 
         let tr = this.createEle('tr', {id: `${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "blankRow"})
         let td0a = "";
@@ -274,11 +277,19 @@ class Results {
         let td6 = this.createEle('td');
         let td7 = this.createEle('td');
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
-        this.tBody.append(tr);
+        // this.tBody.append(tr);
+                    elementArray.push(tr);
         // document.querySelector('tbody').lastElementChild.classList.add('collapsible')   <-- add this if you want to collapse the blank row as well
 
         this.initial = true;
+        
+        return elementArray;
     }
+
+    appendResults(elementArray) {
+        this.tBody.append(...elementArray);
+    }
+
 
     /**
      * 
@@ -470,21 +481,24 @@ class MasterEngine {
      * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year duration has been reached. 
      */
     simulator() {
+        let resultsToAppend = [] // a collection of elements to append to MyResults.tBody
         switch (this.myResults.choose) {
 
             case "fixed":
-                this.oneWholeScenario();
+                this.oneWholeScenario(resultsToAppend);
                 document.getElementById('caption').textContent = "";  // to remove the Loading result caption for fixed use cases.
+                this.myResults.appendResults(resultsToAppend);
                 break;
         
             case "sequential":
                 while (this.myResults.scenario + Global.INIT_YEAR <= Global.LATEST_YEAR) {
-                    this.oneWholeScenario();
-                    this.myResults.appendBlank();
+                    this.oneWholeScenario(resultsToAppend);
+                    this.myResults.createBlankRow(resultsToAppend);
                     this.myResults.scenario++;
                     this.setValues(this.myResults.scenario);
                 }
                 setTimeout(() => { //set timeout since the result span text also has it
+                    this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
                     console.log(performance.now()) //record log of end time for benchmark purposes
                 }, 0);
@@ -494,12 +508,13 @@ class MasterEngine {
                 let iterations = Global.convert2Num(document.getElementById('trials').value, false); // declare user-specified number iterations
                 if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
                 while (this.myResults.scenario < iterations) {
-                    this.oneWholeScenario(); 
-                    this.myResults.appendBlank();
+                    this.oneWholeScenario(resultsToAppend); 
+                    this.myResults.createBlankRow(resultsToAppend);
                     this.myResults.scenario++;
                     this.setValues(this.myResults.scenario);
                 }
                 setTimeout( () => { //set timeout since the result span text also has it
+                    this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
                     console.log(performance.now()) //record log of end time for benchmark purposes
                 }, 0);
@@ -513,11 +528,12 @@ class MasterEngine {
     /**
      * This function goes through one whole scenario from beginning year to end year to see how well the portfolio holds
      */
-    oneWholeScenario() {
+    oneWholeScenario(resultsToAppend) {
+
         while (this.myPortfolio.currentYear !== this.myPortfolio.finalYr) {
             this.sP500.newYear(); // initial configuration for the random scenario to set the values of random year, which depends on the Portfolio class current year.
             this.recordResult(); // records the result in the master array
-            this.myResults.createTblRow(); // appends a row of results for display output. 
+            this.myResults.createTblRow(resultsToAppend); // appends a row of results for display output. 
             //functions to update variables for the following year
             this.myPortfolio.pValue = this.myPortfolio.pValueEnd;
             this.myPortfolio.priorYrReturn = this.sP500.annualReturn; // to keep track of the prior year return. The ordering is very important here.
