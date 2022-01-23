@@ -8,7 +8,7 @@
 // TODO : Test the random year function iterating it many times to make sure it is accurate
 // TODO : Add the new button as a separate function
 // TODO : Add feature to export results to spreadsheet
-
+// TODO : Performance improvement suggestions https://stackoverflow.com/questions/8640692/slow-response-when-the-html-table-is-big
 
 
 

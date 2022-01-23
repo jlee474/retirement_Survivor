@@ -18,6 +18,7 @@ html {
 }
 
 header {
+    display: "";
 }
 
 body {
@@ -60,7 +61,7 @@ input {
 
 table {
     font-family: 'Source Code Pro', monospace;
-    
+    transform: rotateX(0deg);   /*supposed to improve performance somehow? https://stackoverflow.com/questions/8640692/slow-response-when-the-html-table-is-big  */ 
     margin: 10px auto;
 }
 thead th {
