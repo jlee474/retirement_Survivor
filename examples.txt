@@ -1,0 +1,5 @@
+<!-- examples of title attribute tooltip customizations -->
+
+https://www.w3docs.com/tools/code-editor/10124
+
+https://www.w3docs.com/snippets/css/how-to-change-the-style-of-the-title-attribute-inside-an-anchor-tag.html

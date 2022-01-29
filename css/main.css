@@ -18,6 +18,7 @@ html {
 }
 
 header {
+    display: "";
 }
 
 body {
@@ -60,7 +61,7 @@ input {
 
 table {
     font-family: 'Source Code Pro', monospace;
-    
+    transform: rotateX(0deg);   /*supposed to improve performance somehow? https://stackoverflow.com/questions/8640692/slow-response-when-the-html-table-is-big  */ 
     margin: 10px auto;
 }
 thead th {
@@ -112,11 +113,18 @@ td, th[scope="row"] {
     height: 15px;
 }
 
+h1 {
+    margin: 20px 10px 0px 0px;
+}
+h2 {
+    margin: 5px 0px;
+}
+
 h3 {
     margin: 5px 0px;
 }
 h4 {
-    margin: 0px;
+    margin: 5px 0px;
 }
 ul {
     list-style-type: disclosure-closed;   
