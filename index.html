@@ -6,7 +6,7 @@
 <html lang="en">
 
     <head>
-        <title>Retirement Survivor</title>
+        <title>Portfolio Survivor</title>
         <meta name="viewport" content="width-device-width, initial-scale=1.0">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,40 +16,38 @@
     </head>
     <body>
         <header>
-            <h1>Retirement Survivor: Will my portfolio last?</h1>
-            <h3>Have you ever wondered whether you could retire based on historical market data?</h3>
+            <h1>Portfolio Survivor: Will it last? </h1><h2>A tool to help those planning to retire</h2>
+            <h3>Have you ever wondered how your portfolio would perform when you retire, based on historical market data?</h3>
             <h3>This simulation will help you determine, based on S&P 500 annual returns.</h3>
             <section id="assumptions">
                 <h4>Assumptions:</h4>
                 <ul>
-                    <li>Portfolio is 100% invested in S&P500 market index fund</li>
-                    <li>Annual withdrawal will be made at the beginning of the period. <br>(Annual return based on portfolio value AFTER beginning of year withdrawal)</li>
+                    <li title ="testing can you see me? TODO ">Annual withdrawal will be made at the beginning of the period. <br><i>(Annual return based on portfolio value AFTER beginning of year withdrawal)</i></li>
                 </ul>
             </section>
-            <input type="submit" id="autofill" value="autofill"> 
+            <input type="submit" id="autofill" value="default"> 
         </header>
     
         <main>
             <div id="input_section">
                 
-                <h2>Simulation</h2>
+                <h2>Simulation Option</h2>
                 <div>
-                    <input type="radio" id="fixed" value="fixed" name="choose" title="This simulation will assume a fixed average rate of return specified by user and ignore market return">
+                    <input type="radio" id="fixed" value="fixed" name="choose" class="options" title="This simulation will assume a fixed average rate of return specified by user and ignore market return">
                     <label for="fixed" title="This simulation will assume a fixed average rate of return specified by user and ignore market return">Fixed Rate of Return</label>
                 </div>
                 <div>
-                    <input type="radio" id="sequential" value="sequential" name="choose" title="This simulation will run based on all the historical years and see how well your portfolio will do. For future years for which there is yet no data, the average annual return rate specified by user will be assumed (unless loop option is checked)">
+                    <input type="radio" id="sequential" value="sequential" name="choose" class="options" title="This simulation will run based on all the historical years and see how well your portfolio will do. For future years for which there is yet no data, the average annual return rate specified by user will be assumed (unless loop option is checked)">
                     <label for="sequential" title="This simulation will run based on all the historical years and see how well your portfolio will do. For future years for which there is yet no data, the average annual return rate specified by user will be assumed (unless loop option is checked)">Chronological Sequence</label>
                 </div>
                 <div>
-                    <input type="radio" id="random" value="random_historical" name="choose" title="This simulation will run historical market years in random order. Years will not repeat. Additional data will be needed, including iterations calc option, and years to splice">
+                    <input type="radio" id="random" value="random_historical" name="choose" class="options" title="This simulation will run historical market years in random order. Years will not repeat. Additional data will be needed, including iterations calc option, and years to splice">
                     <label for="random" title="This simulation will run historical market years in random order. Years will not repeat. Additional data will be needed, including iterations calc option, and years to splice">Random (Historical Rates)</label>
                 </div>
 
                 <div class="inpField">
                     <label for="pValue">Portfolio Value (current value of your portfolio)</label>
                     <input type="text" id="pValue" class="currency" title="Current Starting Value of Your Portfolio" value="">
-                    <span style="position: absolute; margin-left: 3px; margin-top: 40px; ">$</span>
                 </div>
                 
                 <div class="inpField">
@@ -73,7 +71,7 @@
                 </div>
                 
                 <div class="inpField">
-                    <label for="rReturn">Avg Annual Return</label>
+                    <label for="rReturn">Fixed Annual Return</label>
                     <input type="text" id="rReturn" title="This is the assumed average rate of market return." placeholder="Enter as decimal" value="">
                 </div>
                 
@@ -107,8 +105,10 @@
                 <h4>Comments Questions Feedback?</h4>
             </div>
         </footer>
+        <script src="./globals.js"></script>
+        <script src="./options.js"></script>
         <script src="./input.js"></script>
-        <script src="./app.js"></script>
+        <script src="./calculate.js"></script>
         <script src="./autofill.js"></script>
     </body>
 
