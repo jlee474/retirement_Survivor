@@ -1,5 +1,6 @@
 // TODO : Fix the withdrawals so it doesn't withdrawal more than the portfolio beginning amount 
 // TODO : Fix the S&P500 year and Pct gains Loss column, no need to add parenthesis.
+// TODO : Make the Years Elapsed in the summarize initial row only applicable to the year the portfolio died, if it did not survive
 // TODO : Make the scrolling faster, improve performance. Try using some sort of setTimeout for the style.display change on all the elements so it does it all at once, instead of for each element?
 
 // TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
@@ -182,8 +183,8 @@ class Results {
         let th0a = "";
         let th0b = "";
         if (this.choose === "sequential" || this.choose === "random") {
-            th0a = this.createEle('th', {scope:"col", class:"td_small"},'(S&P500 <br> Year)', false);
-            th0b = this.createEle('th', {scope:"col", class:"td_small"},'(Pct <br>Gains/Loss)', false);
+            th0a = this.createEle('th', {scope:"col", class:"td_small"},'S&P500 <br> Year', false);
+            th0b = this.createEle('th', {scope:"col", class:"td_small"},'Pct <br>Gains/Loss', false);
         }
         let th1 = this.createEle('th', {scope: 'col'}, 'Year', true);
         let th2 = this.createEle('th', {scope: 'col'}, 'Portfolio <br>Beg. Value', false);
@@ -212,9 +213,12 @@ class Results {
             elementArray.push(spWrapEle);
 
             // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
+            /*
             setTimeout(  ()=> { 
                 spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
-            }, 0 )
+            }, 0)
+
+            */
 
             //this following section adds a button next to the table to expand/collapse (left side)
             let btnWrapEle = this.createEle('div', {class: "collapseDivBtn"});
@@ -243,7 +247,7 @@ class Results {
             let year = null;
             if (this.choose === "sequential")  year = Engine.sP500.year;
             else if (this.choose === "random")  year = Engine.sP500.randomYearReturnObj.randomMktYear;
-            td0a = this.createEle('td', {scope: "col", class: "td_small MktYear"},`(${year})`, true);
+            td0a = this.createEle('td', {scope: "col", class: "td_small MktYear"},`${year}`, true);
             td0b = this.createEle('td', {scope: "col", class: "td_small Return"},`${Global.convert2Str(Engine.sP500.annualReturn,true)}`, true);
         };
         
@@ -307,7 +311,6 @@ class Results {
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
                     for (let ele of arr) {
                         ele.style.display = "table-row";
-
                         // this checks if it's the initial index row to change the values 
                         if (ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "expand");
@@ -319,7 +322,6 @@ class Results {
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => {
                     for (let ele of arr) {
                         ele.style.display = "";
-
                         // this checks if it's the initial index row to change the values 
                         if (ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "collapse");
@@ -327,11 +329,11 @@ class Results {
                     }
                 });
             }
-
             // this section will move the Pass/Fail display when the table size changes
             let spans = document.getElementsByClassName('tempPlaceHolderWrapperClass')
+            let leftOffset = `${document.querySelector('tr').clientWidth + 15}px`
             for (let span of spans) {
-                span.style.left = `${document.querySelector('tr').clientWidth + 15}px`
+                span.style.left = leftOffset;
             }
         })
         callback; //optional callback
@@ -458,22 +460,6 @@ class Results {
             else repContent = `${repContent}`; // to "stringify"
             element.textContent = repContent;
         }
-        console.log("test how many times this method is being called")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 
 
@@ -610,9 +596,8 @@ class MasterEngine {
                     this.myResults.scenario++;
                     this.setValues(this.myResults.scenario);
                 }
-
+                this.fixInitialRowResult(resultsToAppend);
                 setTimeout(() => { //set timeout since the result span text also has it
-                    this.fixInitialRowResult(resultsToAppend);
                     this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
                     console.log(performance.now()) //record log of end time for benchmark purposes
@@ -628,9 +613,8 @@ class MasterEngine {
                     this.myResults.scenario++;
                     this.setValues(this.myResults.scenario);
                 }
-
+                this.fixInitialRowResult(resultsToAppend);
                 setTimeout( () => { //set timeout since the result span text also has it
-                    this.fixInitialRowResult(resultsToAppend);
                     this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
                     console.log(performance.now()) //record log of end time for benchmark purposes
@@ -665,6 +649,8 @@ class MasterEngine {
      */
     updatePassFailDisp() {
         let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
+        let styleleftOffset = `${document.querySelector('tr').clientWidth + 15}px`;
+
         for (let element of passFailArray) {
             let iteration = element.id.slice(4); // TODO: (optional) can use regEx expression to get the span id and parse it out to just get the iteration value. implemention code: 5rew631nbqw
             iteration = iteration.slice(0, iteration.indexOf('-')); 
@@ -672,6 +658,7 @@ class MasterEngine {
             let lastIndex = this.master_records[iteration].length - 1
             let portfolioEnd = this.master_records[iteration][lastIndex].PortfolioEnd;
             element.style.display = ""
+            element.parentElement.style.left = styleleftOffset; // remember for alignment to adjust the wrapper element (parent of), not the actual in-line span (text) element
             element.style.fontStyle = "italic"
             if (portfolioEnd > 0) {
                 element.textContent = "Pass"
@@ -740,38 +727,15 @@ class MasterEngine {
         // TODO: Implement this part. it will take the elements in the results to and replace the first row for each scenario.
         //  might be able to combine with the MyResults.tempCompare( "collapse") function as it performs similarly i think, or at least the subfunction within it ??? 
 
+        // to extract the array of initial row for each scenario
+        let initRowElements = [];
+        for (let result of resultsToAppend) {
+            if (result.classList.contains("init_Index"))  initRowElements.push(result);
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
+        for (let row of initRowElements) {
+            this.myResults.tempCompare(row, "collapse") 
+        }
     }
 
 
