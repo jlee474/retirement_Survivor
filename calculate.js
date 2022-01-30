@@ -1,3 +1,7 @@
+// TODO : Fix the withdrawals so it doesn't withdrawal more than the portfolio beginning amount 
+// TODO : Fix the S&P500 year and Pct gains Loss column, no need to add parenthesis.
+// TODO : Make the scrolling faster, improve performance. Try using some sort of setTimeout for the style.display change on all the elements so it does it all at once, instead of for each element?
+
 // TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
@@ -254,9 +258,8 @@ class Results {
         
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
         elementArray.push(tr);
-
-        this.initial = false; // after this method has run, the next run won't be the initial
-
+        // after this method has run, the next run won't be the initial
+        this.initial = false; 
         return elementArray;
     }
 
@@ -317,25 +320,10 @@ class Results {
                     for (let ele of arr) {
                         ele.style.display = "";
 
-                        // TODO: implement a method call here to .tempCompare() for collapse action
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                        // this checks if it's the initial index row to change the values 
+                        if (ele.classList.contains("init_Index")) {
+                            this.tempCompare(ele, "collapse");
+                        }
                     }
                 });
             }
@@ -403,16 +391,16 @@ class Results {
         let iteration = id.slice(0, id.indexOf('-'));
         let PortfolioYr = id.slice(id.indexOf('-') + 1);
         let masterRecIndex = [...Engine.master_records[iteration]]
-
         for (let child of element.children) {
             
             // to create a standard array of the class lists of elements, since some may contain multiple classes
             let classList = [...child.classList];
-
             for (let singleClass of classList) {
                 let decimal = null;
                 let activateSwitch = true; 
                 switch (singleClass) {
+                    case "MktYear": 
+                        break;
                     case "Return":
                         decimal = true;
                         break;
@@ -436,19 +424,24 @@ class Results {
                     case "YearsElapsed":
                         break;
                     default:
-                        // if none of the above, activate switch is false;
+                        // if none of the above, activateSwitch is false;
                         activateSwitch = false;
                         break;
                 }
                 if (activateSwitch) {
-
-                    let masterRecIndexValue = masterRecIndex[0][singleClass];
-                    this.editContent(child, masterRecIndexValue, decimal)
+                    let masterRecIndexValue = "";
+                    if (action === "expand") {
+                        masterRecIndexValue = masterRecIndex[0][singleClass];
+                        this.editContent(child, masterRecIndexValue, decimal)
+                    }
+                    else if (action === "collapse") {
+                        Engine.summarizeInitRowData(masterRecIndex, singleClass, result => this.editContent(child, result, decimal));
+                    }
                 }
+
             }
         }
     }
-
 
     /**
      * This function edits the textContent of the element being passed in
@@ -457,21 +450,30 @@ class Results {
      * @param {boolean} decimal true means value is expressed as decimal or %; false means $ 
      */
     editContent(element, repContent, decimal = null) {
-        if (decimal === true)  repContent = Global.convert2Str(repContent, true)
-        else if (decimal === false)  repContent = `$ ${Global.convert2Str(repContent, false)}`
-        else repContent = `${repContent}`; // to "stringify"
-
-
-        // TODO: Once fully implemented, the testing lines below can disappear
-        if (true) {
-            let result = element.textContent === repContent ? "Pass" : "Fail"
-            console.log(`element.textContent is ${element.textContent}  Replacement content is ${repContent} The === results is ${result}`);
-            if (result === "Fail") alert("Fail alert, there has been a change in the QA process. code 3970939") 
+        if (repContent === Global.TRUNCATED) {
+            element.textContent = repContent;
+        } else if (repContent !== null) {
+            if (decimal === true)  repContent = Global.convert2Str(repContent, true)
+            else if (decimal === false)  repContent = `$ ${Global.convert2Str(repContent, false)}`
+            else repContent = `${repContent}`; // to "stringify"
+            element.textContent = repContent;
         }
+        console.log("test how many times this method is being called")
 
 
-        element.textContent = repContent;
-        // element.textContent = "testing";
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
 
@@ -687,6 +689,47 @@ class MasterEngine {
 
 
     /**
+     * This method calculates summary for a column based on the scenario array of the master_record
+     * @param {Array} scenarioIndex the master record with the iteration array index
+     * @param {string} colName the column name, i.e. Return, PortfolioYr, Withdrawal, etc.
+     * @param {function anonymous (result) {
+         
+     }} an optional callback function with the result passed in as the argument
+     * @returns the result in numerical format
+     */
+    summarizeInitRowData(scenarioIndex, colName, callback = undefined) {
+        let result = null;
+        switch (colName) {
+            case "MktYear":
+                // only truncate the market year column for random option
+                if (this.myResults.choose === "random")  result = Global.TRUNCATED;
+                break;
+            case "Return":
+            case "PortfolioYr":
+            case "PortfolioMid":
+            case "HypoWD":
+                result = Global.TRUNCATED
+                break;
+            case "Withdrawal":
+            case "MktGainsLoss":
+                // calculates the total sum from each array index value
+                for (let i of scenarioIndex) {
+                    result += i[colName];
+                }
+                break;
+            case "PortfolioEnd":
+            case "YearsElapsed":
+                // get the last index in the array
+                result = scenarioIndex[scenarioIndex.length - 1][colName]
+                break;
+            default:
+                break;
+        }
+        if (callback === undefined) return result;
+        else return callback(result);
+    }
+
+    /**
      * This method will fix the initial row display result to show the relevant ending values, instead of the initial values. 
      * @param {Array} resultsToAppend 
      * @returns the Array
@@ -698,6 +741,35 @@ class MasterEngine {
         //  might be able to combine with the MyResults.tempCompare( "collapse") function as it performs similarly i think, or at least the subfunction within it ??? 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
 
     }
