@@ -1,10 +1,10 @@
+// TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
 // TODO : Fix loading button while waiting for results. Like please wait . . . 
 // TODO : Reorder the tablet result for the other options so that it is more readable, i.e. mkt year and mkt return.
 // TODO : THe mid-portfolio value-- do something with it so it stands back.
 // TODO : Scroll down will make the table header sticky to the top
-// TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
 // TODO : Test the random year function iterating it many times to make sure it is accurate
 // TODO : Add the new button as a separate function
 // TODO : Add feature to export results to spreadsheet
@@ -199,16 +199,14 @@ class Results {
     }
 
 
-
     createTblRow(elementArray){
-
         if (this.initial && this.choose !== "fixed") {  // adds the buttons and side result text. to check if its the initial row with data
             // this block of code adds the text result display that shows on the right side
             let spWrapEle = this.createEle('div', {class: "tempPlaceHolderWrapperClass"});
             let nSpan = this.createEle('span', {style: "display: none", id: `span${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "tempPlaceHolderSpanClass"}, "", true);
             spWrapEle.append(nSpan)
-            // this.tBody.insertAdjacentElement('beforeend', spWrapEle);
-                        elementArray.push(spWrapEle);
+            elementArray.push(spWrapEle);
+
             // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
             setTimeout(  ()=> { 
                 spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
@@ -218,41 +216,44 @@ class Results {
             let btnWrapEle = this.createEle('div', {class: "collapseDivBtn"});
             let nButton = this.createEle('button', {id: `btn${this.scenario}-${Engine.myPortfolio.currentYear}`, class: 'collapseBtn'}, `${Global.EXPAND}`, true)
             btnWrapEle.append(nButton)
-            // this.tBody.insertAdjacentElement('beforeend', btnWrapEle);
-                        elementArray.push(btnWrapEle);
-            this.expand(nButton); // function to add the event handler and functionality // TODO: Caution check if this still will work with the refactoring or if order is important.....
+            elementArray.push(btnWrapEle);
+            // function to add the event handler and functionality // TODO: Caution check if this still will work with the refactoring or if order is important.....
+            this.expand(nButton);
         }
 
         // the following section appends the results of a given year as a table row
         let tr = this.createEle('tr', {id:`${this.scenario}-${Engine.myPortfolio.currentYear}`})
 
-        // for sequential and random options: if this is NOT the first row, add a collapsible class tag
+        // for sequential and random options: if this is NOT the first row, add a collapsible class tag. Else, add an initIndex class tag
+            // for the class tags that are applicable, make sure the description matches exactly with the master_records array
         if ((this.choose === "sequential" || this.choose === "random") && !this.initial) {
             tr.classList.add('collapsible');
+        } else if ((this.choose === "sequential" || this.choose === "random") && this.initial) {
+            tr.classList.add('init_Index')
         }
 
         let td0a = "";
         let td0b = "";
         if (this.choose === "sequential" || this.choose === "random") {
+            // TODO: clean up this part getting the market return year, especially for random. 
             let year = null;
             if (this.choose === "sequential")  year = Engine.sP500.year;
             else if (this.choose === "random")  year = Engine.sP500.randomYearReturnObj.randomMktYear;
-            td0a = this.createEle('td', {scope: "col", class: "td_small"},`(${year})`, true);
-            td0b = this.createEle('td', {scope: "col", class: "td_small"},`${Global.convert2Str(Engine.sP500.annualReturn,true)}`, true);
+            td0a = this.createEle('td', {scope: "col", class: "td_small MktYear"},`(${year})`, true);
+            td0b = this.createEle('td', {scope: "col", class: "td_small Return"},`${Global.convert2Str(Engine.sP500.annualReturn,true)}`, true);
         };
         
-        let th = this.createEle('th', {scope: "row"}, `${Engine.myPortfolio.currentYear}`,true) // Year
-        let td1 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.pValue, false)}`, true); //Portofolio Beg Value
-        let td2 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.wdAmount, false)}`, true); //Withdrawals
-        let td3 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.pValueMid, false)}`, true); //Portfolio mid value
-        let td4 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.return, false)}`, true);  //market gains/losses
-        let td5 = this.createEle('td', {}, `$ ${Global.convert2Str(Engine.myPortfolio.pValueEnd, false)}`, true);  //Portfolio End
-        let td6 = this.createEle('td', {}, `${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)}`,true);  //Hypo % W/D Rate
-        let td7 = this.createEle('td', {}, `${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}`,true); //Years Elapsed
+        let th = this.createEle('th', {scope: "row", class: "PortfolioYr"}, `${Engine.myPortfolio.currentYear}`,true) // Year
+        let td1 = this.createEle('td', {class: "PortfolioBeg"}, `$ ${Global.convert2Str(Engine.myPortfolio.pValue, false)}`, true); //Portofolio Beg Value
+        let td2 = this.createEle('td', {class: "Withdrawal"}, `$ ${Global.convert2Str(Engine.myPortfolio.wdAmount, false)}`, true); //Withdrawals
+        let td3 = this.createEle('td', {class: "td_small PortfolioMid"}, `$ ${Global.convert2Str(Engine.myPortfolio.pValueMid, false)}`, true); //Portfolio mid value
+        let td4 = this.createEle('td', {class: "MktGainsLoss"}, `$ ${Global.convert2Str(Engine.myPortfolio.return, false)}`, true);  //market gains/losses
+        let td5 = this.createEle('td', {class: "PortfolioEnd"}, `$ ${Global.convert2Str(Engine.myPortfolio.pValueEnd, false)}`, true);  //Portfolio End
+        let td6 = this.createEle('td', {class: "HypoWD"}, `${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)}`,true);  //Hypo % W/D Rate
+        let td7 = this.createEle('td', {class: "YearsElapsed"}, `${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}`,true); //Years Elapsed
         
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
-        // this.tBody.append(tr);
-                    elementArray.push(tr);
+        elementArray.push(tr);
 
         this.initial = false; // after this method has run, the next run won't be the initial
 
@@ -260,7 +261,6 @@ class Results {
     }
 
     createBlankRow(elementArray) {
-
         let tr = this.createEle('tr', {id: `${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "blankRow"})
         let td0a = "";
         let td0b = "";
@@ -277,8 +277,7 @@ class Results {
         let td6 = this.createEle('td');
         let td7 = this.createEle('td');
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
-        // this.tBody.append(tr);
-                    elementArray.push(tr);
+        elementArray.push(tr);
         // document.querySelector('tbody').lastElementChild.classList.add('collapsible')   <-- add this if you want to collapse the blank row as well
 
         this.initial = true;
@@ -299,18 +298,44 @@ class Results {
      */
     expand(element, callback) {
         element.addEventListener('click', (e) => {
-            if (e.target.textContent === Global.EXPAND) {
-                e.target.textContent = Global.COLLAPSE;
-                this.getAllSiblingsofType(e.target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
+            let target = e.target;
+            if (target.textContent === Global.EXPAND) {
+                target.textContent = Global.COLLAPSE;
+                this.getAllSiblingsofType(target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
                     for (let ele of arr) {
                         ele.style.display = "table-row";
+
+                        // this checks if it's the initial index row to change the values 
+                        if (ele.classList.contains("init_Index")) {
+                            this.tempCompare(ele, "expand");
+                        }
                     }
                 }); 
-            } else if (e.target.textContent === Global.COLLAPSE) {
-                e.target.textContent = Global.EXPAND;
-                this.getAllSiblingsofType(e.target.parentNode, 'tr', arr => {
+            } else if (target.textContent === Global.COLLAPSE) {
+                target.textContent = Global.EXPAND;
+                this.getAllSiblingsofType(target.parentNode, 'tr', arr => {
                     for (let ele of arr) {
                         ele.style.display = "";
+
+                        // TODO: implement a method call here to .tempCompare() for collapse action
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     }
                 });
             }
@@ -365,6 +390,90 @@ class Results {
         }
         return newEle;
     }
+
+
+    /**
+     * This method name is temporary, it will be used to edit the initial table row values upon expand or collapse
+     * @param {HTMLHtmlElement} element the element that represents the initial row of a given scenario
+     * @param {string} action must contain "expand" or "collapse" depending on the action that called this method
+     */
+    tempCompare(element, action=null) {
+        if (action === null) alert("method call in class Results.tempCompare() is missing argument action. Ref code: 8036752")
+        let id = element.id;
+        let iteration = id.slice(0, id.indexOf('-'));
+        let PortfolioYr = id.slice(id.indexOf('-') + 1);
+        let masterRecIndex = [...Engine.master_records[iteration]]
+
+        for (let child of element.children) {
+            
+            // to create a standard array of the class lists of elements, since some may contain multiple classes
+            let classList = [...child.classList];
+
+            for (let singleClass of classList) {
+                let decimal = null;
+                let activateSwitch = true; 
+                switch (singleClass) {
+                    case "Return":
+                        decimal = true;
+                        break;
+                    case "PortfolioYr":
+                        break;
+                    case "Withdrawal":
+                        decimal = false;
+                        break;
+                    case "PortfolioMid":
+                        decimal = false;
+                        break;
+                    case "MktGainsLoss":
+                        decimal = false;
+                        break;
+                    case "PortfolioEnd":
+                        decimal = false;
+                        break;
+                    case "HypoWD":
+                        decimal = true;
+                        break;
+                    case "YearsElapsed":
+                        break;
+                    default:
+                        // if none of the above, activate switch is false;
+                        activateSwitch = false;
+                        break;
+                }
+                if (activateSwitch) {
+
+                    let masterRecIndexValue = masterRecIndex[0][singleClass];
+                    this.editContent(child, masterRecIndexValue, decimal)
+                }
+            }
+        }
+    }
+
+
+    /**
+     * This function edits the textContent of the element being passed in
+     * @param {element} element that contains the textContent to be replaced
+     * @param {number} repContent the textContent to be replaced, in numerical format (not string)
+     * @param {boolean} decimal true means value is expressed as decimal or %; false means $ 
+     */
+    editContent(element, repContent, decimal = null) {
+        if (decimal === true)  repContent = Global.convert2Str(repContent, true)
+        else if (decimal === false)  repContent = `$ ${Global.convert2Str(repContent, false)}`
+        else repContent = `${repContent}`; // to "stringify"
+
+
+        // TODO: Once fully implemented, the testing lines below can disappear
+        if (true) {
+            let result = element.textContent === repContent ? "Pass" : "Fail"
+            console.log(`element.textContent is ${element.textContent}  Replacement content is ${repContent} The === results is ${result}`);
+            if (result === "Fail") alert("Fail alert, there has been a change in the QA process. code 3970939") 
+        }
+
+
+        element.textContent = repContent;
+        // element.textContent = "testing";
+    }
+
 
     get currentRow() {
         return document.getElementById(`${this.scenario}-${Engine.myPortfolio.currentYear}`)
@@ -481,7 +590,9 @@ class MasterEngine {
      * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year duration has been reached. 
      */
     simulator() {
-        let resultsToAppend = [] // a collection of elements to append to MyResults.tBody
+        
+        // resultsToAppend = a collection of result elements to append to MyResults.tBody
+        let resultsToAppend = [] // note as an array object, it can be passed in and edited by other .methods(), since it is passing by REFERENCE the array in memory, not the copied value.
         switch (this.myResults.choose) {
 
             case "fixed":
@@ -497,7 +608,9 @@ class MasterEngine {
                     this.myResults.scenario++;
                     this.setValues(this.myResults.scenario);
                 }
+
                 setTimeout(() => { //set timeout since the result span text also has it
+                    this.fixInitialRowResult(resultsToAppend);
                     this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
                     console.log(performance.now()) //record log of end time for benchmark purposes
@@ -513,7 +626,9 @@ class MasterEngine {
                     this.myResults.scenario++;
                     this.setValues(this.myResults.scenario);
                 }
+
                 setTimeout( () => { //set timeout since the result span text also has it
+                    this.fixInitialRowResult(resultsToAppend);
                     this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
                     console.log(performance.now()) //record log of end time for benchmark purposes
@@ -552,7 +667,6 @@ class MasterEngine {
             let iteration = element.id.slice(4); // TODO: (optional) can use regEx expression to get the span id and parse it out to just get the iteration value. implemention code: 5rew631nbqw
             iteration = iteration.slice(0, iteration.indexOf('-')); 
             iteration = parseInt(iteration);
-
             let lastIndex = this.master_records[iteration].length - 1
             let portfolioEnd = this.master_records[iteration][lastIndex].PortfolioEnd;
             element.style.display = ""
@@ -567,9 +681,27 @@ class MasterEngine {
             }
         }
 
-        // innerHTML, textcontent won't work render html formatting like <br>
+        // innerHTML, b/c textcontent won't work in rendering html formatting like <br>
         document.getElementById('caption').innerHTML = this.myResults.passFailRatio; 
     }
+
+
+    /**
+     * This method will fix the initial row display result to show the relevant ending values, instead of the initial values. 
+     * @param {Array} resultsToAppend 
+     * @returns the Array
+     */
+    fixInitialRowResult(resultsToAppend) {
+        console.log("Implement this feature here. ref code: 62dd873")
+        
+        // TODO: Implement this part. it will take the elements in the results to and replace the first row for each scenario.
+        //  might be able to combine with the MyResults.tempCompare( "collapse") function as it performs similarly i think, or at least the subfunction within it ??? 
+
+
+
+
+    }
+
 
     /**
      * @returns : Updates the master result array 
@@ -588,8 +720,8 @@ class MasterEngine {
             mktYear = this.sP500.year;
             theReturn = this.sP500.annualReturn;
         } else if (this.myResults.choose === "random") {
-            mktYear = this.sP500.randomYearReturnObj.randomMktYear;
-            theReturn = this.sP500.randomYearReturnObj.randomMktReturn;
+            mktYear = this.sP500.randomYearReturnObj.randomMktYear; // TODO : Refactor this code and clean it up
+            theReturn = this.sP500.annualReturn; // TODO:  Refactor this code and clean it up
         }
         let object = {  // CREATE OBJECT HERE to be inserted based on the values below
             MktYear : mktYear,
@@ -597,7 +729,7 @@ class MasterEngine {
             PortfolioYr : this.myPortfolio.currentYear,
             PortfolioBeg : this.myPortfolio.pValue,
             Withdrawal : this.myPortfolio.wdAmount,
-            PortfolioMid : this.myPortfolio.pValue,
+            PortfolioMid : this.myPortfolio.pValueMid,
             MktGainsLoss : this.myPortfolio.return,
             PortfolioEnd : this.myPortfolio.pValueEnd,
             HypoWD : this.myPortfolio.wdRateHypo,

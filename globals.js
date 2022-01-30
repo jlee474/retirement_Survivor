@@ -190,7 +190,8 @@ class globe {
    convert2Str(number, decimal, callback) {  // this after. it will format the input after user has typed it and selection has changed. 
       let result = ""
       if (decimal) {
-         result = `${(number * 100)}`.slice(0, 6) // only take the first six digits incase it is an infinite decimal
+         result = (number * 100).toFixed(8).slice(0, 7) // toFixed() converts to string, slice takes the first 7 digits
+         // result = `${(number * 100)}`.slice(0, 6) // only take the first six digits incase it is an infinite decimal
          result = result.replace( /(((?<=(\.|,)\d*?[1-9])0+$)|(\.|,)0+$)/g, "") // a very complicated regex that removes any trailing zeroes after the decimal. had to find it online. https://stackoverflow.com/questions/26299160/using-regex-how-do-i-remove-the-trailing-zeros-from-a-decimal-number
          result = `${result} %`;
       } else {
@@ -211,9 +212,11 @@ class globe {
       // decimal === undefined ? false : true; // if decimal is not passed in as argument
       let number = 0;
       if (decimal) {
-         number = parseFloat(  str.replace(/[^0-9.]/g, ""))/100; // removes all commas, $ and returns decimal
+         number = parseFloat(  str.replace(/[^-0-9.]/g, ""))/100; // removes all commas, $ and returns decimal
+         // the next line is to clear javascript from unusual arithmetic result. i.e. try 31.12 / 100 and see the result
+         number = parseFloat(number.toFixed(8))
       }
-      else number = parseInt(str.replace(/[^0-9.]/g, "")) // should remove all commas and return integer
+      else number = parseInt(str.replace(/[^-0-9.]/g, "")) // should remove all commas and return integer
       return callback === undefined ? number : callback(number);
    }
 
