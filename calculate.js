@@ -1,8 +1,5 @@
-// TODO : Fix the withdrawals so it doesn't withdrawal more than the portfolio beginning amount 
-// TODO : Fix the S&P500 year and Pct gains Loss column, no need to add parenthesis.
 // TODO : Make the Years Elapsed in the summarize initial row only applicable to the year the portfolio died, if it did not survive
-// TODO : Make the scrolling faster, improve performance. Try using some sort of setTimeout for the style.display change on all the elements so it does it all at once, instead of for each element?
-
+// TODO : rename the tempCompare method
 // TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
@@ -145,14 +142,20 @@ class Portfolio {
         return this.pValueMid * Engine.sP500.annualReturn;
     }
     get pValueEnd() {
-        return (this.pValueMid + this.return < 1) ? 0 : this.pValueMid + this.return;
+        if (this.pValueMid + this.return < 1) {
+            return 0; 
+        }  
+        else {
+            return this.pValueMid + this.return;
+        }
+        // return (this.pValueMid + this.return < 1) ? 0 : this.pValueMid + this.return;
     }
     get wdAmount() {
         
         // to check if prior year return if exists was negative, then reduce the withdrawal rate by the user-specified amount.
-        if (this.priorYrReturn === undefined) return this.wdRate;
-        else if (this.priorYrReturn >= 0) return this.wdRate;
-        else if (this.priorYrReturn < 0) return this.wdRate * (1 - this.reductionRatio);
+        if (this.priorYrReturn === undefined) return Math.min(this.wdRate, this.pValue);
+        else if (this.priorYrReturn >= 0) return Math.min(this.wdRate, this.pValue);
+        else if (this.priorYrReturn < 0) return Math.min(  this.wdRate * (1 - this.reductionRatio) , this.pValue);
         else throw error;
     }
 
@@ -211,14 +214,6 @@ class Results {
             let nSpan = this.createEle('span', {style: "display: none", id: `span${this.scenario}-${Engine.myPortfolio.currentYear}`, class: "tempPlaceHolderSpanClass"}, "", true);
             spWrapEle.append(nSpan)
             elementArray.push(spWrapEle);
-
-            // this is to defer execution of the placement of the display text until all the html contents are rendered, in order to determine the appropriate table-row width and position adjustment
-            /*
-            setTimeout(  ()=> { 
-                spWrapEle.style.left = `${document.querySelector('tr').clientWidth + 15}px`;
-            }, 0)
-
-            */
 
             //this following section adds a button next to the table to expand/collapse (left side)
             let btnWrapEle = this.createEle('div', {class: "collapseDivBtn"});
@@ -286,9 +281,7 @@ class Results {
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
         elementArray.push(tr);
         // document.querySelector('tbody').lastElementChild.classList.add('collapsible')   <-- add this if you want to collapse the blank row as well
-
         this.initial = true;
-        
         return elementArray;
     }
 
@@ -306,11 +299,13 @@ class Results {
     expand(element, callback) {
         element.addEventListener('click', (e) => {
             let target = e.target;
+            console.time("expandTop")
             if (target.textContent === Global.EXPAND) {
                 target.textContent = Global.COLLAPSE;
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
                     for (let ele of arr) {
                         ele.style.display = "table-row";
+
                         // this checks if it's the initial index row to change the values 
                         if (ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "expand");
@@ -329,12 +324,15 @@ class Results {
                     }
                 });
             }
+            console.timeEnd("expandTop");
             // this section will move the Pass/Fail display when the table size changes
+            console.time("expandBot")
             let spans = document.getElementsByClassName('tempPlaceHolderWrapperClass')
             let leftOffset = `${document.querySelector('tr').clientWidth + 15}px`
             for (let span of spans) {
-                span.style.left = leftOffset;
+                span.style.left = leftOffset
             }
+            console.timeEnd("expandBot");
         })
         callback; //optional callback
     }
@@ -347,6 +345,7 @@ class Results {
      * @returns an array of the SUBSEQUENT CONSECUTIVE sibling elements that match the tagname query 
      */
     getAllSiblingsofType(target, tagname, callback) {
+        
         let qArray = []; // the array of query results
         tagname = tagname.toUpperCase();
         let nElemSibling = target.nextElementSibling;
@@ -460,8 +459,17 @@ class Results {
             else repContent = `${repContent}`; // to "stringify"
             element.textContent = repContent;
         }
+        // to add custom style formatting for certain values
+        if (element.classList.contains("YearsElapsed") && Engine.myPortfolio.survivalD > repContent) {
+            if (element.textContent !== "1") {
+                element.style.color = "red";
+                element.style.fontStyle = "italic";
+            } else {
+                element.style.color = "";
+                element.style.fontStyle = "";
+            }
+        }
     }
-
 
     get currentRow() {
         return document.getElementById(`${this.scenario}-${Engine.myPortfolio.currentYear}`)
@@ -494,7 +502,7 @@ class MasterEngine {
     }
 
     start() {
-        console.log(performance.now())
+        console.time('render')
         this.master_records = [];
         let table = document.querySelector('table'); 
         if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
@@ -600,7 +608,7 @@ class MasterEngine {
                 setTimeout(() => { //set timeout since the result span text also has it
                     this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
-                    console.log(performance.now()) //record log of end time for benchmark purposes
+                    console.timeEnd('render');
                 }, 0);
                 break;
 
@@ -617,7 +625,7 @@ class MasterEngine {
                 setTimeout( () => { //set timeout since the result span text also has it
                     this.myResults.appendResults(resultsToAppend);
                     this.updatePassFailDisp();
-                    console.log(performance.now()) //record log of end time for benchmark purposes
+                    console.timeEnd('render');
                 }, 0);
                 break;
 
@@ -686,6 +694,8 @@ class MasterEngine {
      */
     summarizeInitRowData(scenarioIndex, colName, callback = undefined) {
         let result = null;
+        // get the last index in the array
+        let lastIndex = scenarioIndex.length - 1;
         switch (colName) {
             case "MktYear":
                 // only truncate the market year column for random option
@@ -705,9 +715,16 @@ class MasterEngine {
                 }
                 break;
             case "PortfolioEnd":
-            case "YearsElapsed":
                 // get the last index in the array
-                result = scenarioIndex[scenarioIndex.length - 1][colName]
+                result = scenarioIndex[lastIndex][colName]
+                break;
+            case "YearsElapsed":
+                result = scenarioIndex[lastIndex][colName]
+                while (scenarioIndex[lastIndex].PortfolioEnd < 1) {
+                    // to reduce the YearsElapsed return value by each year (if any) that the Portfolio didn't survive
+                    result = result - 1;
+                    lastIndex = lastIndex - 1;
+                }
                 break;
             default:
                 break;

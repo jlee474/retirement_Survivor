@@ -61,7 +61,9 @@ input {
 
 table {
     font-family: 'Source Code Pro', monospace;
-    transform: rotateX(0deg);   /*supposed to improve performance somehow? https://stackoverflow.com/questions/8640692/slow-response-when-the-html-table-is-big  */ 
+    /*supposed to improve performance somehow? https://stackoverflow.com/questions/8640692/slow-response-when-the-html-table-is-big  */ 
+        transform: translate3d(0, 0, 0);   
+        overflow: scroll;
     margin: 10px auto;
 }
 thead th {
