@@ -1,3 +1,4 @@
+// TODO : In css, try setting the verticle height of the table fixed, maybe then the row width will work since it can't wrap. and set no wrap. or if already set, do the opposite. experiment.
 // TODO : Make the Years Elapsed in the summarize initial row only applicable to the year the portfolio died, if it did not survive
 // TODO : rename the tempCompare method
 // TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
@@ -167,6 +168,14 @@ class Portfolio {
 }
 
 
+
+
+//TODO : try this 
+// To prevent the overlapping of column contents you can additionaly use text-overflow: ellipsis which provides in combination with overflow:hidden the non-overlapping cuttet content with dots... suffix notation:
+//  .myTable{table-layout: fixed;} .myTable td{text-overflow: ellipsis; overflow-x: hidden;} – 
+// Ruwen
+// https://stackoverflow.com/questions/9523927/how-to-stop-table-from-resizing-when-contents-grow
+
 class Results {
     constructor(choose, scenario) {
         this.choose = choose;
@@ -178,7 +187,7 @@ class Results {
     }
     
     dHeader() {
-        
+        // 
         let table = this.createEle('table');
         let caption = this.createEle('caption', {id: "caption"}, "Loading results ...", true);
         let thead = this.createEle('thead');
@@ -230,7 +239,23 @@ class Results {
         // for sequential and random options: if this is NOT the first row, add a collapsible class tag. Else, add an initIndex class tag
             // for the class tags that are applicable, make sure the description matches exactly with the master_records array
         if ((this.choose === "sequential" || this.choose === "random") && !this.initial) {
-            tr.classList.add('collapsible');
+                        tr.classList.add('collapsible');
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        // TODO : check this part
+
+
+
+
+
+
+
+            tr.classList.add('expanded');
         } else if ((this.choose === "sequential" || this.choose === "random") && this.initial) {
             tr.classList.add('init_Index')
         }
@@ -255,6 +280,26 @@ class Results {
         let td6 = this.createEle('td', {class: "HypoWD"}, `${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)}`,true);  //Hypo % W/D Rate
         let td7 = this.createEle('td', {class: "YearsElapsed"}, `${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}`,true); //Years Elapsed
         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
         elementArray.push(tr);
         // after this method has run, the next run won't be the initial
@@ -595,39 +640,58 @@ class MasterEngine {
         
             case "sequential":
                 while (this.myResults.scenario + Global.INIT_YEAR <= Global.LATEST_YEAR) {
-                    this.oneWholeScenario(resultsToAppend);
-                    this.myResults.createBlankRow(resultsToAppend);
-                    this.myResults.scenario++;
-                    this.setValues(this.myResults.scenario);
+                    // this.oneWholeScenario(resultsToAppend);
+                    // this.myResults.createBlankRow(resultsToAppend);
+                    // this.myResults.scenario++;
+                    // this.setValues(this.myResults.scenario);
+                    this.runSimSequence(resultsToAppend);
                 }
-                this.fixInitialRowResult(resultsToAppend);
-                setTimeout(() => { //set timeout since the result span text also has it
-                    this.myResults.appendResults(resultsToAppend);
-                    this.updatePassFailDisp();
-                    console.timeEnd('render');
-                }, 0);
+                // this.fixInitialRowResult(resultsToAppend);
+                // setTimeout(() => { //set timeout helps with performance?
+                    // this.myResults.appendResults(resultsToAppend);
+                    // this.updatePassFailDisp();
+                    // console.timeEnd('render');
+                // }, 0);
+                this.runSimSequence2(resultsToAppend);
                 break;
 
             case "random":
                 let iterations = Global.convert2Num(document.getElementById('trials').value, false); // declare user-specified number iterations
                 if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
                 while (this.myResults.scenario < iterations) {
-                    this.oneWholeScenario(resultsToAppend); 
-                    this.myResults.createBlankRow(resultsToAppend);
-                    this.myResults.scenario++;
-                    this.setValues(this.myResults.scenario);
+                    // this.oneWholeScenario(resultsToAppend); 
+                    // this.myResults.createBlankRow(resultsToAppend);
+                    // this.myResults.scenario++;
+                    // this.setValues(this.myResults.scenario);
+                    this.runSimSequence(resultsToAppend);
                 }
-                this.fixInitialRowResult(resultsToAppend);
-                setTimeout( () => { //set timeout since the result span text also has it
-                    this.myResults.appendResults(resultsToAppend);
-                    this.updatePassFailDisp();
-                    console.timeEnd('render');
-                }, 0);
+                // this.fixInitialRowResult(resultsToAppend);
+                // setTimeout( () => { //set timeout since the result span text also has it
+                    // this.myResults.appendResults(resultsToAppend);
+                    // this.updatePassFailDisp();
+                    // console.timeEnd('render');
+                // }, 0);
+                this.runSimSequence2(resultsToAppend);
                 break;
 
             default:
                 break;
         }
+    }
+
+    runSimSequence(resultsToAppend) {
+        this.oneWholeScenario(resultsToAppend);
+        this.myResults.createBlankRow(resultsToAppend);
+        this.myResults.scenario++;
+        this.setValues(this.myResults.scenario);
+    }
+    runSimSequence2(resultsToAppend) {
+        this.fixInitialRowResult(resultsToAppend);
+        setTimeout(() => { //set timeout speeds things up?
+            this.myResults.appendResults(resultsToAppend);
+            this.updatePassFailDisp();
+            console.timeEnd('render');
+        }, 0);
     }
 
     /**
@@ -737,9 +801,6 @@ class MasterEngine {
     fixInitialRowResult(resultsToAppend) {
         console.log("Implement this feature here. ref code: 62dd873")
         
-        // TODO: Implement this part. it will take the elements in the results to and replace the first row for each scenario.
-        //  might be able to combine with the MyResults.tempCompare( "collapse") function as it performs similarly i think, or at least the subfunction within it ??? 
-
         // to extract the array of initial row for each scenario
         let initRowElements = [];
         for (let result of resultsToAppend) {
@@ -786,13 +847,20 @@ class MasterEngine {
         }
         this.master_records[scenario][currentRow] = {...object}
     }
-
 }
 
 let Engine = new MasterEngine();
 
 
 
+//TODO:  some css commands to fix the table
+
+//table style="table-layout: fixed"
+//children[1].minWidth = children[1].clientWidth;
+//children[1].clientWidth
+//children[i].style.width = `${children[i].clientWidth}px`;
+// The row 1942 changes the $('tr').clientWidth by 3 px, but how/why/WHERE?
+// Check table row index 3 , it expands on 1942
 
 
 

@@ -62,8 +62,12 @@ input {
 table {
     font-family: 'Source Code Pro', monospace;
     /*supposed to improve performance somehow? https://stackoverflow.com/questions/8640692/slow-response-when-the-html-table-is-big  */ 
+        /* transform is supposed to improve performance by putting the client machine to use 3d acceleration? */
         transform: translate3d(0, 0, 0);   
-        overflow: scroll;
+        /* the table-layout fixed is a performance improvement, though i see no change in the interaction */
+        table-layout: fixed;
+        /* no idea what overflow scroll does. seems to improve performance somehow? */
+        overflow: scroll; 
     margin: 10px auto;
 }
 thead th {
@@ -71,11 +75,13 @@ thead th {
     color: #FFF;
     border: 1px solid teal;
     padding: 6px;
+        table-layout: fixed;
 }
 tr {
     background: #f4f7f8;
     border-bottom: 1px solid #ffff;
     margin-bottom: 5px;
+        table-layout: fixed;
 }
 tr:nth-child(even) {
     background: #e8eeef;
@@ -84,10 +90,15 @@ td, th[scope="row"] {
     border: 1px rgb(170, 208, 233) groove;
     padding: 2px;
     text-align: center;
+        table-layout: fixed;
+        /* these 2 sets of code don't seem to do nothing */
+        text-overflow: ellipsis; 
+        overflow-x: hidden;
 }
 .td_small {
     font-size: .90rem;
     font-style: italic;
+        table-layout: fixed;
 }
 
 .collapsible {
