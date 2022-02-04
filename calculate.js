@@ -1,6 +1,5 @@
 // TODO : Make the Years Elapsed in the summarize initial row only applicable to the year the portfolio died, if it did not survive
-// TODO : Refactor -- see if some of the functions in the Engine class can be refactored
-// TODO : rename the tempCompare method and other temp methods
+// TODO : rename the tempCompare method
 // TODO : Refactor the Results class to display based on the master_records array, use a function to test if the existing and new code results are equal before switching over.
 // TODO : Create a button/checkbox option that shows the final year result as the header instead of the inital year result as the header
 // TODO : Make the result display that is on the right of the table to dynamically addjust when  table width changes i.e. expanding the table row
@@ -218,7 +217,6 @@ class Results {
 
             //this following section adds a button next to the table to expand/collapse (left side)
             let btnWrapEle = this.createEle('div', {class: "collapseDivBtn"});
-            // note that if the id of the button changes, other dependent functions will change as well! like the expand() method
             let nButton = this.createEle('button', {id: `btn${this.scenario}-${Engine.myPortfolio.currentYear}`, class: 'collapseBtn'}, `${Global.EXPAND}`, true)
             btnWrapEle.append(nButton)
             elementArray.push(btnWrapEle);
@@ -292,11 +290,6 @@ class Results {
     }
 
 
-
-    // TODO: add the new expand function here from scratch and the same parameters?  rename the existing expand function like expandTemp so it doesn't get deleted. 
-        // Engine.master_results = []; // array of the complete (expanded) results for display (string) format
-        // Engine.master_initrow = []; // array of the results for init row summary values for display format
-    
     /**
      * 
      * @param {element} element the element for which the event handler will be added
@@ -304,112 +297,6 @@ class Results {
      * @returns undefined. This function simply sets the event handler to the element.
      */
     expand(element, callback) {
-        element.addEventListener('click', (e) => {
-            let target = e.target;
-            let parent = target.parentElement;
-            // 
-            if (target.textContent === Global.EXPAND) {
-                target.textContent = Global.COLLAPSE;
-                // found represents the index value of the element we are looking for in the array search
-                let found = null; 
-                let id = target.id;
-                let results = Engine.master_results;
-                for (let result in results) { // Note that it's a for "in" loop, not a for "of" loop, since we want the index number
-                    if (results[result].tagName === 'DIV' && results[result].classList.contains("collapseDivBtn")) {
-                        for (let child of results[result].children) {
-                            if (child.id === id)  found = parseInt(result);
-                        }
-                    }
-                }
-                let stop = null; 
-                for (let i = found; i < results.length; i++) {
-                    if (results[i].classList.contains("blankRow")) {
-                        stop = i;
-                        break;
-                    }
-                }
-                
-                if (parent.nextSibling.classList.contains("init_Index")) {
-                    parent.nextSibling.remove();
-                    // this part appends at the sibling level '.after()' the array of elements at the appropriate indexes
-                    parent.after(...results.slice(found + 1, stop));
-                } else {
-                    alert("error, next sibling is not a valid init row. deleting will have something go wrong. code 5701929");
-                }
-
-                /*
-                this.getAllSiblingsofType(target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
-                    for (let ele of arr) {
-                        ele.style.display = "table-row";
-
-                        // this checks if it's the initial index row to change the values 
-                        if (ele.classList.contains("init_Index")) {
-                            this.tempCompare(ele, "expand");
-                        }
-                    }
-                }); 
-                */
-
-            } else if (target.textContent === Global.COLLAPSE) {
-                target.textContent = Global.EXPAND;
-                // to get id of the element of the initial row we are replacing 
-                let id = parent.nextSibling.id; 
-                let init_rows = Engine.master_initrow;
-                while (!parent.nextSibling.classList.contains("blankRow")) {
-                    parent.nextSibling.remove();
-                }
-                for (let row of init_rows) {
-                    if (row.id === id) {
-                        parent.after(row);
-                        break;
-                    }
-                }
-
-
-
-
-
-
-
-
-                /*
-                this.getAllSiblingsofType(target.parentNode, 'tr', arr => {
-                    for (let ele of arr) {
-                        ele.style.display = "";
-                        // this checks if it's the initial index row to change the values 
-                        if (ele.classList.contains("init_Index")) {
-                            this.tempCompare(ele, "collapse");
-                        }
-                    }
-                });
-                */
-
-
-            }
-            // this section will move the Pass/Fail display when the table size changes
-            let spans = document.getElementsByClassName('tempPlaceHolderWrapperClass')
-            let leftOffset = `${document.querySelector('tr').clientWidth + 15}px`
-            for (let span of spans) {
-                span.style.left = leftOffset
-            }
-        })
-        callback; //optional callback
-    }
-
-
-
-
-
-
-
-
-    /**
-     * 
-     * @param {element} element the element for which the event handler will be added
-     * @param {*} callback an optional callback function
-     * @returns undefined. This function simply sets the event handler to the element.
-     */
-    expand_Temp(element, callback) {
         element.addEventListener('click', (e) => {
             let target = e.target;
             if (target.textContent === Global.EXPAND) {
@@ -601,9 +488,7 @@ class MasterEngine {
         this.sP500 = null;
         this.myPortfolio = null;
         this.myResults = null;
-        this.master_results = []; // array of the complete (expanded) results for display (string) format
-        this.master_initrow = []; // array of the results for init row summary values for display format
-        this.master_records = []; // array of the results in numerical/operable format
+        this.master_records = [];
         this.userInputs = {};
         this.addClick();
     }
@@ -667,11 +552,13 @@ class MasterEngine {
             alert("You must have a survival duration");
             target = document.getElementById('survival');
         } else validated = true;
+
         if (target !== null) {
             target.focus();
             target.selectionStart = 0
             target.selectionEnd = -1
         }
+
         return validated;
     }
 
@@ -708,73 +595,39 @@ class MasterEngine {
         
             case "sequential":
                 while (this.myResults.scenario + Global.INIT_YEAR <= Global.LATEST_YEAR) {
-                    // this.oneWholeScenario(resultsToAppend);
-                    // this.myResults.createBlankRow(resultsToAppend);
-                    // this.myResults.scenario++;
-                    // this.setValues(this.myResults.scenario);
-                    this.runSimSequence(resultsToAppend);
+                    this.oneWholeScenario(resultsToAppend);
+                    this.myResults.createBlankRow(resultsToAppend);
+                    this.myResults.scenario++;
+                    this.setValues(this.myResults.scenario);
                 }
-                this.runSimSequence2(resultsToAppend);
-                // this.fixInitialRowResult(resultsToAppend);
-                // setTimeout(() => { //set timeout since the result span text also has it
-                    // this.myResults.appendResults(resultsToAppend);
-                    // this.updatePassFailDisp();
-                    // console.timeEnd('render');
-                // }, 0);
+                this.fixInitialRowResult(resultsToAppend);
+                setTimeout(() => { //set timeout since the result span text also has it
+                    this.myResults.appendResults(resultsToAppend);
+                    this.updatePassFailDisp();
+                    console.timeEnd('render');
+                }, 0);
                 break;
 
             case "random":
                 let iterations = Global.convert2Num(document.getElementById('trials').value, false); // declare user-specified number iterations
                 if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
                 while (this.myResults.scenario < iterations) {
-                    // this.oneWholeScenario(resultsToAppend); 
-                    // this.myResults.createBlankRow(resultsToAppend);
-                    // this.myResults.scenario++;
-                    // this.setValues(this.myResults.scenario);
-                    this.runSimSequence(resultsToAppend);
+                    this.oneWholeScenario(resultsToAppend); 
+                    this.myResults.createBlankRow(resultsToAppend);
+                    this.myResults.scenario++;
+                    this.setValues(this.myResults.scenario);
                 }
-                this.runSimSequence2(resultsToAppend);
-                // this.fixInitialRowResult(resultsToAppend);
-                // setTimeout( () => { //set timeout since the result span text also has it
-                //     this.myResults.appendResults(resultsToAppend);
-                //     this.updatePassFailDisp();
-                //     console.timeEnd('render');
-                // }, 0);
+                this.fixInitialRowResult(resultsToAppend);
+                setTimeout( () => { //set timeout since the result span text also has it
+                    this.myResults.appendResults(resultsToAppend);
+                    this.updatePassFailDisp();
+                    console.timeEnd('render');
+                }, 0);
                 break;
 
             default:
                 break;
         }
-    }
-
-
-    runSimSequence(resultsToAppend) {
-        this.oneWholeScenario(resultsToAppend);
-        this.myResults.createBlankRow(resultsToAppend);
-        this.myResults.scenario++;
-        this.setValues(this.myResults.scenario);
-    }
-    runSimSequence2(resultsToAppend) {
-        this.fixInitialRowResult(resultsToAppend);
-        
-        
-            resultsToAppend = this.refactorCodeTemp(resultsToAppend);
-
-
-        setTimeout(() => { //set timeout speeds things up?
-            this.myResults.appendResults(resultsToAppend);
-            this.updatePassFailDisp();
-            console.timeEnd('render');
-        }, 0);
-    }
-    
-
-    refactorCodeTemp(resultsToAppend) {
-        let filtered = [];
-        for (let result of resultsToAppend) {
-            if (!result.classList.contains("collapsible"))  filtered.push(result)
-        };
-        return filtered;
     }
 
     /**
@@ -831,6 +684,7 @@ class MasterEngine {
      * @param {Array} scenarioIndex the master record with the iteration array index
      * @param {string} colName the column name, i.e. Return, PortfolioYr, Withdrawal, etc.
      * @param {function anonymous (result) {
+         
      }} an optional callback function with the result passed in as the argument
      * @returns the result in numerical format
      */
@@ -880,29 +734,21 @@ class MasterEngine {
      * @param {Array} resultsToAppend 
      * @returns the Array
      */
-    fixInitialRowResult(resultsToAppend) {  // TODO : remove vestigial code in this function after refactor
-        // to extract the array of initial row for each scenario
-        this.master_results = [...resultsToAppend];
-
-        // debugger;
+    fixInitialRowResult(resultsToAppend) {
+        console.log("Implement this feature here. ref code: 62dd873")
         
+        // TODO: Implement this part. it will take the elements in the results to and replace the first row for each scenario.
+        //  might be able to combine with the MyResults.tempCompare( "collapse") function as it performs similarly i think, or at least the subfunction within it ??? 
+
+        // to extract the array of initial row for each scenario
         let initRowElements = [];
         for (let result of resultsToAppend) {
             if (result.classList.contains("init_Index"))  initRowElements.push(result);
         }
-        
-        
-        
-        // TODO : the commands below seem to affect the elements in the array this.master_results. It must be because the elements within the array are still by reference and not value. 
-        // TODO : We may need to do a "DEEP COPY" or find an alternate solution, for instance refactor the code the code such that it doesn't require this method.
-        // TODO : 
-        // TODO : The issue can be read here   https://medium.com/@kevinlai76/the-spread-operator-deep-and-shallow-copies-d193ac9b58bf
-        
+
         for (let row of initRowElements) {
             this.myResults.tempCompare(row, "collapse") 
         }
-        // debugger;
-        this.master_initrow = [...initRowElements];
     }
 
 

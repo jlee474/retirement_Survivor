@@ -91,8 +91,7 @@ td, th[scope="row"] {
 }
 
 .collapsible {
-    /* display: none;      This is the new refactored code */
-    
+    display: none;
 }
 
 .collapseDivBtn {
