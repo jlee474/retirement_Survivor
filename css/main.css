@@ -52,6 +52,9 @@ footer {
     margin-top: auto;
 }
 
+#autofill {
+    text-align: center;
+}
 input {
     text-align: right;
     max-width: 150px;
@@ -63,6 +66,7 @@ input {
 	/* transform: translate3d(0, 0, 0); */
     /* overflow:hidden */
     /* overflow:scroll */
+    /* table-layout: fixed */
 /* } */
 table {
     font-family: 'Source Code Pro', monospace;
@@ -81,6 +85,9 @@ thead th {
     padding: 6px;
         table-layout: fixed;
 }
+/* tbody {
+    table-layout: fixed;
+} */
 tr {
     background: #f4f7f8;
     border-bottom: 1px solid #ffff;
@@ -107,9 +114,9 @@ td, th[scope="row"] {
         table-layout: fixed;
 }
 
-.collapsible {
+/* .collapsible {
     display: none;
-}
+} */
 
 .collapseDivBtn {
     position: relative;

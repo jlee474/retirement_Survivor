@@ -241,11 +241,19 @@ class Results {
             
             
             
+
+
             
             
                         // TODO : check this part
+                        // setTimeout(()=>{tr.classList.add('collapsible')},0);
                         tr.classList.add('collapsible');
                         // tr.classList.add('expanded');
+                        // tr.style.display = "table-row";
+
+
+
+
 
 
 
@@ -276,6 +284,8 @@ class Results {
         let td6 = this.createEle('td', {class: "HypoWD"}, `${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)}`,true);  //Hypo % W/D Rate
         let td7 = this.createEle('td', {class: "YearsElapsed"}, `${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}`,true); //Years Elapsed
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
+        // TODO : review and get rid of vestigial code when time is right
+            // this.calculateMaxWidth(tr);
         elementArray.push(tr);
         // after this method has run, the next run won't be the initial
         this.initial = false; 
@@ -309,6 +319,19 @@ class Results {
         this.tBody.append(...elementArray);
     }
 
+    calculateMaxWidth(tr) {
+        for (let child of tr.children) {
+            let tC = child.textContent;
+            let length = child.textContent.length;
+            for (let cl of child.classList) {
+                if (Engine.renderWidth.hasOwnProperty(cl)) {
+                    if (Engine.renderWidth[cl] < length)  Engine.renderWidth[cl] = length;
+                } else {
+                    Engine.renderWidth[cl] = length;
+                }
+            }
+        }
+    }
 
     /**
      * 
@@ -318,17 +341,13 @@ class Results {
     expand(element) {
         element.addEventListener('click', (e) => {
             // DEBUG NOTES : this expand eventhandler only takes 25-100ms from start to end
-            console.time("expandevent")
             let target = e.target;
             if (target.textContent === Global.EXPAND) {
                 target.textContent = Global.COLLAPSE;
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
                     for (let ele of arr) {
                         let initial = true;
-                        // MINOR perf. improv. adj classlist with settimeout
-                            // ele.style.display = "table-row";
-                            // setTimeout(()=>{ele.classList.remove("collapsible")},0)
-                        ele.classList.remove("collapsible")
+                        ele.style.display = "table-row";
                         // this checks if it's the initial index row to change the values 
                         if (initial && ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "expand");
@@ -341,15 +360,12 @@ class Results {
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => {
                     for (let ele of arr) {
                         let initial = true;
-                        // MINOR perf. improv. adj classlist with settimeout
-                            // ele.style.display = "";
-                            // setTimeout(()=>{ele.classList.add("collapsible")},0)
-                        ele.classList.add("collapsible")
                         // this checks if it's the initial index row to change the values 
-                        if (initial && ele.classList.contains("init_Index")) {
+                        if (ele.classList.contains("collapsible"))  ele.style.display = "none";
+                        else if (initial && ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "collapse");
                             initial = false;
-                        }
+                        } 
                     }
                 });
             }
@@ -359,7 +375,6 @@ class Results {
             for (let span of spans) {
                 span.style.left = leftOffset
             }
-            console.timeEnd("expandevent")
         })
     }
 
@@ -420,7 +435,6 @@ class Results {
         let PortfolioYr = id.slice(id.indexOf('-') + 1);
         let masterRecIndex = [...Engine.master_records[iteration]]
         for (let child of element.children) {
-            
             // to create a standard array of the class lists of elements, since some may contain multiple classes
             let classList = [...child.classList];
             for (let singleClass of classList) {
@@ -466,7 +480,6 @@ class Results {
                         Engine.summarizeInitRowData(masterRecIndex, singleClass, result => this.editContent(child, result, decimal));
                     }
                 }
-
             }
         }
     }
@@ -510,7 +523,6 @@ class Results {
         str += `This gives it pass rate of ${Global.convert2Str(Engine.myResults.pass/Engine.master_records.length,true)} based on a survival duration of ${Engine.myPortfolio.survivalD} years`;
         return str;
     }
-    
 }
 
 
@@ -521,6 +533,7 @@ class MasterEngine {
         this.myResults = null;
         this.master_records = [];
         this.userInputs = {};
+        this.renderWidth = {};  // keeps track of maxwidth
         this.addClick();
     }
     
@@ -529,7 +542,7 @@ class MasterEngine {
     }
 
     start() {
-        console.time('render')
+        console.time('total render')
         this.master_records = [];
         let table = document.querySelector('table'); 
         if (table !== null) table.remove(); // if there is an existing table, delete it. this will ensure a fresh slate. 
@@ -583,13 +596,11 @@ class MasterEngine {
             alert("You must have a survival duration");
             target = document.getElementById('survival');
         } else validated = true;
-
         if (target !== null) {
             target.focus();
             target.selectionStart = 0
             target.selectionEnd = -1
         }
-
         return validated;
     }
 
@@ -652,10 +663,58 @@ class MasterEngine {
     }
     runSimSequence2(resultsToAppend) {
         this.fixInitialRowResult(resultsToAppend);
-        setTimeout(() => { //set timeout speeds things up?
+        setTimeout(() => { //set timeout speeds things up? Not necessarily. It's used mostly to show the table Loading results screen. 
+            console.time("appendTimer")
             this.myResults.appendResults(resultsToAppend);
+            console.timeEnd("appendTimer")
+            // this section sets the width
+            let children = document.querySelector('tbody tr').children;
+            console.time("Applying the fixed style.width for the table row header")
+            // DEBUG NOTE: This loop is what takes the longest time but it's vital for performance and user experience once the table is rendered
+            for (let child of children) { // children should be length 10 = num columns
+                child.style.width = `${child.clientWidth + 1}px`;
+                /*
+                for (let cl of child.classList) {
+                    switch (cl) {
+                        case "MktYear":
+                        case "HypoWD":
+                        case "MktGainsLoss":
+                        case "Return":
+                        case "PortfolioYr":
+                        case "PortfolioBeg":
+                        case "PortfolioMid":
+                        case "PortfolioEnd":
+                        case "Withdrawal":
+                        case "YearsElapsed":
+            // TODO : Completely and totally stumped here. for some reason the width determination using .clientWidth works performance-wise, but not with the renderWidth calculation
+                            // child.style.minWidth = `${this.renderWidth[cl]*12}px`
+                            // child.style.width = `${this.renderWidth[cl]*12}px`
+                            // child.style.minWidth = `${child.clientWidth + 1}px`;
+                            child.style.width = `${child.clientWidth + 1}px`;
+                            // child.style.maxWidth = `${child.clientWidth + 1}px`;
+
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                */
+            }
+            console.timeEnd("Applying the fixed style.width for the table row header")
+
+            let collapsible = document.getElementsByClassName('collapsible');
+            let length = collapsible.length;
+            // note: if it is a self-editing array, the loop should be written this way. 
+            for (let i = 0; i < length; i++) {
+                // DEBUG NOTE : This loop takes 35ms to run with the latest update.
+                // setTimeout will load partially rendered result faster but you will see it in action
+                collapsible[i].style.display = "none";
+                // setTimeout(()=>{collapsible[i].classList.add("collapsible");},0);
+                        // collapsible[0].remove();
+                // collapsible[0].classList.remove("expanded"); remove this part since it adds 10 seconds to do for some reason
+            }
             this.updatePassFailDisp();
-            console.timeEnd('render');
+            console.timeEnd('total render');
         }, 0);
     }
 
@@ -764,8 +823,6 @@ class MasterEngine {
      * @returns the Array
      */
     fixInitialRowResult(resultsToAppend) {
-        console.log("Implement this feature here. ref code: 62dd873")
-        
         // to extract the array of initial row for each scenario
         let initRowElements = [];
         for (let result of resultsToAppend) {
@@ -819,10 +876,8 @@ let Engine = new MasterEngine();
 
 
 //TODO:  some css commands to fix the table
-
 //table style="table-layout: fixed"
-//children[1].minWidth = children[1].clientWidth;
-//children[1].clientWidth
+//children[1].style.minWidth = children[1].clientWidth;
 //children[i].style.width = `${children[i].clientWidth}px`;
 // The row 1942 changes the $('tr').clientWidth by 3 px, but how/why/WHERE?
 // Check table row index 3 , it expands on 1942
