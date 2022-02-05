@@ -58,7 +58,12 @@ input {
     background-color: rgba(205, 250, 161, 0.096);
     margin: 5px;
 }
-
+/* #results { */
+    /* -webkit-transform: translate3d(0, 0, 0); */
+	/* transform: translate3d(0, 0, 0); */
+    /* overflow:hidden */
+    /* overflow:scroll */
+/* } */
 table {
     font-family: 'Source Code Pro', monospace;
     /*supposed to improve performance somehow? https://stackoverflow.com/questions/8640692/slow-response-when-the-html-table-is-big  */ 
@@ -66,8 +71,7 @@ table {
         transform: translate3d(0, 0, 0);   
         /* the table-layout fixed is a performance improvement, though i see no change in the interaction */
         table-layout: fixed;
-        /* no idea what overflow scroll does. seems to improve performance somehow? */
-        overflow: scroll; 
+        
     margin: 10px auto;
 }
 thead th {
@@ -92,8 +96,10 @@ td, th[scope="row"] {
     text-align: center;
         table-layout: fixed;
         /* these 2 sets of code don't seem to do nothing */
-        text-overflow: ellipsis; 
-        overflow-x: hidden;
+        /* text-overflow: ellipsis;  */
+        /* overflow-x: hidden; */
+        /* white-space: nowrap; */
+        
 }
 .td_small {
     font-size: .90rem;
@@ -108,6 +114,7 @@ td, th[scope="row"] {
 .collapseDivBtn {
     position: relative;
     left: -50px;
+        table-layout: fixed;
 }
 .collapseBtn {
     position: absolute;
@@ -116,6 +123,7 @@ td, th[scope="row"] {
 .tempPlaceHolderWrapperClass {
     position: relative;
     /* left: 900px;  <- the position adjustment will be dynamically determined based on the table row width */
+        /* table-layout: fixed; */
 }
 .tempPlaceHolderSpanClass {
     position: absolute;

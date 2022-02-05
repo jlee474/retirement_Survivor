@@ -152,7 +152,6 @@ class Portfolio {
         // return (this.pValueMid + this.return < 1) ? 0 : this.pValueMid + this.return;
     }
     get wdAmount() {
-        
         // to check if prior year return if exists was negative, then reduce the withdrawal rate by the user-specified amount.
         if (this.priorYrReturn === undefined) return Math.min(this.wdRate, this.pValue);
         else if (this.priorYrReturn >= 0) return Math.min(this.wdRate, this.pValue);
@@ -166,7 +165,6 @@ class Portfolio {
     }
 
 }
-
 
 
 
@@ -206,7 +204,6 @@ class Results {
         let th6 = this.createEle('th', {scope: 'col'}, 'Portfolio <br>End. Value', false)
         let th7 = this.createEle('th', {scope: 'col'}, 'Hypo % <br>W/D Rate', false)
         let th8 = this.createEle('th', {scope: 'col'}, 'Years <br>Elapsed', false)
-        
         tr.append(th0a, th0b, th1, th2, th3, th4, th5, th6, th7, th8)
         thead.append(tr);
         table.append(caption, thead);
@@ -239,15 +236,16 @@ class Results {
         // for sequential and random options: if this is NOT the first row, add a collapsible class tag. Else, add an initIndex class tag
             // for the class tags that are applicable, make sure the description matches exactly with the master_records array
         if ((this.choose === "sequential" || this.choose === "random") && !this.initial) {
-                        tr.classList.add('collapsible');
-                        
-                        
-                        
-                        
-                        
-                        
-                        
+            
+            
+            
+            
+            
+            
+            
                         // TODO : check this part
+                        tr.classList.add('collapsible');
+                        // tr.classList.add('expanded');
 
 
 
@@ -255,7 +253,6 @@ class Results {
 
 
 
-            tr.classList.add('expanded');
         } else if ((this.choose === "sequential" || this.choose === "random") && this.initial) {
             tr.classList.add('init_Index')
         }
@@ -270,7 +267,6 @@ class Results {
             td0a = this.createEle('td', {scope: "col", class: "td_small MktYear"},`${year}`, true);
             td0b = this.createEle('td', {scope: "col", class: "td_small Return"},`${Global.convert2Str(Engine.sP500.annualReturn,true)}`, true);
         };
-        
         let th = this.createEle('th', {scope: "row", class: "PortfolioYr"}, `${Engine.myPortfolio.currentYear}`,true) // Year
         let td1 = this.createEle('td', {class: "PortfolioBeg"}, `$ ${Global.convert2Str(Engine.myPortfolio.pValue, false)}`, true); //Portofolio Beg Value
         let td2 = this.createEle('td', {class: "Withdrawal"}, `$ ${Global.convert2Str(Engine.myPortfolio.wdAmount, false)}`, true); //Withdrawals
@@ -279,27 +275,6 @@ class Results {
         let td5 = this.createEle('td', {class: "PortfolioEnd"}, `$ ${Global.convert2Str(Engine.myPortfolio.pValueEnd, false)}`, true);  //Portfolio End
         let td6 = this.createEle('td', {class: "HypoWD"}, `${Global.convert2Str(Engine.myPortfolio.wdRateHypo, true)}`,true);  //Hypo % W/D Rate
         let td7 = this.createEle('td', {class: "YearsElapsed"}, `${Engine.myPortfolio.currentYear - Engine.myPortfolio.startYr + 1}`,true); //Years Elapsed
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         tr.append(td0a, td0b, th, td1, td2, td3, td4, td5, td6, td7);
         elementArray.push(tr);
         // after this method has run, the next run won't be the initial
@@ -338,18 +313,20 @@ class Results {
     /**
      * 
      * @param {element} element the element for which the event handler will be added
-     * @param {*} callback an optional callback function
      * @returns undefined. This function simply sets the event handler to the element.
      */
-    expand(element, callback) {
+    expand(element) {
         element.addEventListener('click', (e) => {
+            // DEBUG NOTES : this expand eventhandler only takes 50-90ms from start to end
+            console.time("expandevent")
             let target = e.target;
             if (target.textContent === Global.EXPAND) {
                 target.textContent = Global.COLLAPSE;
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
                     for (let ele of arr) {
-                        ele.style.display = "table-row";
-
+                        // MINOR perf. improv. adj classlist with settimeout
+                            // ele.style.display = "table-row";
+                        setTimeout(()=>{ele.classList.remove("collapsible")},0)
                         // this checks if it's the initial index row to change the values 
                         if (ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "expand");
@@ -360,7 +337,9 @@ class Results {
                 target.textContent = Global.EXPAND;
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => {
                     for (let ele of arr) {
-                        ele.style.display = "";
+                        // MINOR perf. improv. adj classlist with settimeout
+                            // ele.style.display = "";
+                        setTimeout(()=>{ele.classList.add("collapsible")},0)
                         // this checks if it's the initial index row to change the values 
                         if (ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "collapse");
@@ -374,8 +353,8 @@ class Results {
             for (let span of spans) {
                 span.style.left = leftOffset
             }
+            console.timeEnd("expandevent")
         })
-        callback; //optional callback
     }
 
     /**
@@ -386,7 +365,7 @@ class Results {
      * @returns an array of the SUBSEQUENT CONSECUTIVE sibling elements that match the tagname query 
      */
     getAllSiblingsofType(target, tagname, callback) {
-        
+        // DEBUG NOTES : this function takes less than 1ms.
         let qArray = []; // the array of query results
         tagname = tagname.toUpperCase();
         let nElemSibling = target.nextElementSibling;
@@ -418,6 +397,7 @@ class Results {
             if (textOrInner)  newEle.textContent = text;
             else newEle.innerHTML = text;
         }
+
         return newEle;
     }
 
@@ -627,7 +607,6 @@ class MasterEngine {
      * This function will simulate a year of portfolio activity, append the result, simulate a year, append, etc., until the survival year duration has been reached. 
      */
     simulator() {
-        
         // resultsToAppend = a collection of result elements to append to MyResults.tBody
         let resultsToAppend = [] // note as an array object, it can be passed in and edited by other .methods(), since it is passing by REFERENCE the array in memory, not the copied value.
         switch (this.myResults.choose) {
@@ -640,18 +619,8 @@ class MasterEngine {
         
             case "sequential":
                 while (this.myResults.scenario + Global.INIT_YEAR <= Global.LATEST_YEAR) {
-                    // this.oneWholeScenario(resultsToAppend);
-                    // this.myResults.createBlankRow(resultsToAppend);
-                    // this.myResults.scenario++;
-                    // this.setValues(this.myResults.scenario);
                     this.runSimSequence(resultsToAppend);
                 }
-                // this.fixInitialRowResult(resultsToAppend);
-                // setTimeout(() => { //set timeout helps with performance?
-                    // this.myResults.appendResults(resultsToAppend);
-                    // this.updatePassFailDisp();
-                    // console.timeEnd('render');
-                // }, 0);
                 this.runSimSequence2(resultsToAppend);
                 break;
 
@@ -659,18 +628,8 @@ class MasterEngine {
                 let iterations = Global.convert2Num(document.getElementById('trials').value, false); // declare user-specified number iterations
                 if (iterations === '' || iterations === 0 || isNaN(iterations)) iterations = 1;
                 while (this.myResults.scenario < iterations) {
-                    // this.oneWholeScenario(resultsToAppend); 
-                    // this.myResults.createBlankRow(resultsToAppend);
-                    // this.myResults.scenario++;
-                    // this.setValues(this.myResults.scenario);
                     this.runSimSequence(resultsToAppend);
                 }
-                // this.fixInitialRowResult(resultsToAppend);
-                // setTimeout( () => { //set timeout since the result span text also has it
-                    // this.myResults.appendResults(resultsToAppend);
-                    // this.updatePassFailDisp();
-                    // console.timeEnd('render');
-                // }, 0);
                 this.runSimSequence2(resultsToAppend);
                 break;
 
@@ -716,6 +675,7 @@ class MasterEngine {
      * The purpose of this function is to update the Pass Fail results of all the scenarios
      */
     updatePassFailDisp() {
+        // DEBUG NOTES: This section is NOT what causes the performance issue.
         let passFailArray = document.querySelectorAll('span.tempPlaceHolderSpanClass')
         let styleleftOffset = `${document.querySelector('tr').clientWidth + 15}px`;
 
@@ -737,7 +697,6 @@ class MasterEngine {
                 element.style.color = "red"
             }
         }
-
         // innerHTML, b/c textcontent won't work in rendering html formatting like <br>
         document.getElementById('caption').innerHTML = this.myResults.passFailRatio; 
     }
