@@ -317,19 +317,22 @@ class Results {
      */
     expand(element) {
         element.addEventListener('click', (e) => {
-            // DEBUG NOTES : this expand eventhandler only takes 50-90ms from start to end
+            // DEBUG NOTES : this expand eventhandler only takes 25-100ms from start to end
             console.time("expandevent")
             let target = e.target;
             if (target.textContent === Global.EXPAND) {
                 target.textContent = Global.COLLAPSE;
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => { // query filter all selected siblings. sending in parent node as argument because the button is actually wrapped in a div element
                     for (let ele of arr) {
+                        let initial = true;
                         // MINOR perf. improv. adj classlist with settimeout
                             // ele.style.display = "table-row";
-                        setTimeout(()=>{ele.classList.remove("collapsible")},0)
+                            // setTimeout(()=>{ele.classList.remove("collapsible")},0)
+                        ele.classList.remove("collapsible")
                         // this checks if it's the initial index row to change the values 
-                        if (ele.classList.contains("init_Index")) {
+                        if (initial && ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "expand");
+                            initial = false;
                         }
                     }
                 }); 
@@ -337,12 +340,15 @@ class Results {
                 target.textContent = Global.EXPAND;
                 this.getAllSiblingsofType(target.parentNode, 'tr', arr => {
                     for (let ele of arr) {
+                        let initial = true;
                         // MINOR perf. improv. adj classlist with settimeout
                             // ele.style.display = "";
-                        setTimeout(()=>{ele.classList.add("collapsible")},0)
+                            // setTimeout(()=>{ele.classList.add("collapsible")},0)
+                        ele.classList.add("collapsible")
                         // this checks if it's the initial index row to change the values 
-                        if (ele.classList.contains("init_Index")) {
+                        if (initial && ele.classList.contains("init_Index")) {
                             this.tempCompare(ele, "collapse");
+                            initial = false;
                         }
                     }
                 });
